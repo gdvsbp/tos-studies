@@ -1,0 +1,12 @@
+# System and SCM files
+.DS_Store
+
+# Node modules should be added by npm install and not included in source
+node_modules
+package-lock.json
+yarn.lock
+
+# ignore jetbrains ide meta data
+.idea/
+
+.vscode/

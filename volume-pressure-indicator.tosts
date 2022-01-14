@@ -1,0 +1,114 @@
+# Show total volume in gray.  Buying volume in green.  Sell Volume in red.
+# Volume average is gray line.
+# Specified percent over average volume is cybluean triangles.
+# Cody Richmond 1/14/2022 based on Horserider script and already-existing studies
+
+plot Data = close;
+declare lower;
+
+#Inputs
+
+input Show30DayAvg = yes;
+input ShowTodayVolume =  yes;
+input ShowPercentOf30DayAvg = yes;
+input UnusualVolumePercent = 200;
+input Show30BarAvg = yes;
+input ShowCurrentBar = yes;
+input ShowPercentOf30BarAvg = yes;
+input ShowSellVolumePercent = yes;
+
+def O = open;
+def H = high;
+def C = close;
+def L = low;
+def V = volume;
+def buying = V*(C-L)/(H-L);
+def selling = V*(H-C)/(H-L);
+
+#Volume Data
+
+def volLast30DayAvg = (volume(period = AggregationPeriod.DAY)[1] + volume(period = AggregationPeriod.DAY)[2] + volume(period = AggregationPeriod.DAY)[3] + volume(period = AggregationPeriod.DAY)[4] + volume(period = AggregationPeriod.DAY)[5] + volume(period = AggregationPeriod.DAY)[6] + volume(period = AggregationPeriod.DAY)[7] + volume(period = AggregationPeriod.DAY)[8] + volume(period = AggregationPeriod.DAY)[9] + volume(period = AggregationPeriod.DAY)[10] + volume(period = AggregationPeriod.DAY)[11] + volume(period = AggregationPeriod.DAY)[12] + volume(period = AggregationPeriod.DAY)[13] + volume(period = AggregationPeriod.DAY)[14] + volume(period = AggregationPeriod.DAY)[15] + volume(period = AggregationPeriod.DAY)[16] + volume(period = AggregationPeriod.DAY)[17] + volume(period = AggregationPeriod.DAY)[18] + volume(period = AggregationPeriod.DAY)[19] + volume(period = AggregationPeriod.DAY)[20] + volume(period = AggregationPeriod.DAY)[21] + volume(period = AggregationPeriod.DAY)[22] + volume(period = AggregationPeriod.DAY)[23] + volume(period = AggregationPeriod.DAY)[24] + volume(period = AggregationPeriod.DAY)[25] + volume(period = AggregationPeriod.DAY)[26] + volume(period = AggregationPeriod.DAY)[27] + volume(period = AggregationPeriod.DAY)[28] + volume(period = AggregationPeriod.DAY)[29] + volume(period = AggregationPeriod.DAY)[30]) / 30;
+def today = volume(period = AggregationPeriod.DAY);
+def percentOf30Day = Round((today / volLast30DayAvg) * 100, 0);
+def avg30Bars = (volume[1] + volume[2] + volume[3] + volume[4] + volume[5] + volume[6] + volume[7] + volume[8] + volume[9] + volume[10] + volume[11] + volume[12] + volume[13] + volume[14] + volume[15] + volume[16] + volume[17] + volume[18] + volume[19] + volume[20] + volume[21] + volume[22] + volume[23] + volume[24] + volume[25] + volume[26] + volume[27] + volume[28] + volume[29] + volume[30]) / 30;
+def curVolume = volume;
+def percentOf30Bar = Round((curVolume / avg30Bars) * 100, 0);
+def SellVolPercent = Round((Selling / Volume) * 100, 0);
+
+# Labels
+
+AddLabel(Show30DayAvg, "30 Days: " + Round(volLast30DayAvg, 0), Color.LIGHT_GRAY);
+
+AddLabel(ShowTodayVolume, "Today: " + today, (if percentOf30Day >= UnusualVolumePercent then Color.UPTICK else if percentOf30Day >= 100 then Color.ORANGE else Color.LIGHT_GRAY));
+
+AddLabel(ShowPercentOf30DayAvg, percentOf30Day + "%", (if percentOf30Day >= UnusualVolumePercent then Color.UPTICK else if percentOf30Day >= 100 then Color.ORANGE else Color.WHITE) );
+
+AddLabel(Show30BarAvg, "30 Bars: " + Round(avg30Bars, 0), Color.LIGHT_GRAY);
+
+AddLabel(ShowCurrentBar, "Cur: " + curVolume, (if percentOf30Bar >= UnusualVolumePercent then Color.UPTICK else if PercentOf30Bar >= 100 then Color.ORANGE else Color.LIGHT_GRAY));
+
+AddLabel(ShowPercentOf30BarAvg, PercentOf30Bar + "%", (if PercentOf30Bar >= UnusualVolumePercent then Color.UPTICK else if PercentOf30Bar >= 100 then Color.ORANGE else Color.WHITE) );
+
+AddLabel(ShowSellVolumePercent, "Bar Sell %" + SellVolPercent, (if SellVolPercent > 51 then Color.DOWNTICK else if SellVolPercent < 49 then Color.UPTICK else Color.ORANGE));
+
+input type = { default SMP, EXP };
+
+input length = 20;
+plot VolAvg =
+if type == type.SMP then
+MovingAverage(AverageType.SIMPLE, volume, length)
+else
+MovingAverage(AverageType.EXPONENTIAL, volume, length);
+
+VolAvg.SetDefaultColor(GetColor(7));
+
+# Selling Volume
+
+Plot SellVol = if selling > buying then selling else 0;
+SellVol.setPaintingStrategy(PaintingStrategy.Histogram);
+SellVol.AssignValueColor(if curVolume > VolAvg then Color.DOWNTICK else Color.DARK_RED);
+SellVol.HideTitle();
+SellVol.HideBubble();
+SellVol.SetLineWeight(1);
+
+Plot BuyVol = if buying >= selling then buying else 0;
+BuyVol.setPaintingStrategy(PaintingStrategy.Histogram);
+BuyVol.AssignValueColor(if curVolume > VolAvg then Color.UPTICK else Color.DARK_GREEN);
+BuyVol.HideTitle();
+BuyVol.HideBubble();
+BuyVol.SetLineWeight(1);
+
+# Total Volume
+
+# Note that Selling + Buying Volume = Volume.
+plot TV =  volume;
+
+TV.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
+TV.AssignValueColor(if curVolume > VolAvg then Color.WHITE else Color.GRAY);
+#TV.HideTitle();
+#TV.HideBubble();
+TV.SetLineWeight(1);
+
+
+# hiVolume indicator
+# source: http://tinboot.blogspot.com
+# author: allen everhart
+
+input length1 = 20 ;
+input hotPct = 100.0 ;
+
+def ma =
+if type == type.SMP then
+MovingAverage(AverageType.SIMPLE, volume, length)
+else
+MovingAverage(AverageType.EXPONENTIAL, volume, length);
+
+plot hv =
+if 100 * ((volume / ma) - 1) >= hotPct then
+ma
+else
+Double.NaN;
+
+hv.SetDefaultColor(CreateColor(0, 128, 255));
+hv.SetLineWeight(1) ;
+hv.SetPaintingStrategy(PaintingStrategy.TRIANGLES);

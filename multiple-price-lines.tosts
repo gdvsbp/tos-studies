@@ -1,0 +1,34 @@
+# Multiple Price Lines for S/R levels
+
+# user input
+input s1 = 420.69;
+input s2 = 420.69;
+input s3 = 420.69;
+input s4 = 420.69;
+
+input r1 = 480.69;
+input r2 = 480.69;
+input r3 = 480.69;
+input r4 = 480.69;
+
+# determines where lines will be drawn
+plot support1 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s1 else Double.NaN);
+plot support2 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s2 else Double.NaN);
+plot support3 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s3 else Double.NaN);
+plot support4 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s4 else Double.NaN);
+
+plot resistance1 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r1 else Double.NaN);
+plot resistance2 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r2 else Double.NaN);
+plot resistance3 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r3 else Double.NaN);
+plot resistance4 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r4 else Double.NaN);
+
+# Set Color of Lines
+support1.SetDefaultColor(color = Color.Red);
+support2.SetDefaultColor(color = Color.Red);
+support3.SetDefaultColor(color = Color.Red);
+support4.SetDefaultColor(color = Color.Red);
+
+resistance1.SetDefaultColor(color = Color.Cyan);
+resistance2.SetDefaultColor(color = Color.Cyan);
+resistance3.SetDefaultColor(color = Color.Cyan);
+resistance4.SetDefaultColor(color = Color.Cyan);

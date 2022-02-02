@@ -1,0 +1,66 @@
+#This is more a reference script for working with time
+#Time Stamp based upon Gettime and RegularTradingStart. Choose timezone
+input timezone = {default "ET", "CT", "MT", "PT"};
+
+def starthour  = (if timezone == timezone."ET"
+                        then 9
+                        else if timezone == timezone."CT"
+                        then 8
+                        else if timezone == timezone."MT"
+                        then 7
+                        else 6) ;
+def hour = Floor(((starthour * 60 + 30) + (GetTime() - RegularTradingStart(GetYYYYMMDD())) / 60000) / 60);
+def minutes = (GetTime() - RegularTradingStart(GetYYYYMMDD())) / 60000 - ((hour - starthour) * 60 + 30) + 60;
+
+#Example : Bubble showing current time of last bar displayed
+
+input showBubble_lastbar = no;
+
+AddChartBubble(showBubble_lastbar and IsNaN(close[-1]), low, hour + ":" + (if minutes < 10 then "0" else "") + minutes, Color.WHITE, no);
+
+
+#Bubbles showing time stamp based upon a 'cond'
+
+input showBubbles_Limited_by_Count = yes;
+input updown_bubblemover   = 3; # number of ticks * ticksize()
+input sideways_bubblemover = 3; # shifts bubble right (pos) / left (neg)
+def b = -sideways_bubblemover;
+def b1 = b + 1;
+
+def cond = if ExpAverage(close, 3) crosses below ExpAverage(close, 13) then 1 else Double.NaN;
+
+#Bubbles to be displayed are limited by the number input at 'bubble_limit', excluding the last bubble, which follows in code below. The last bubble was separated to show how to connect the offset bubble_limit to the bar it is referencing
+
+input bubble_limit = 3;
+def dataCount  = if !IsNaN(cond) == 1    then  dataCount[1] + 1  else dataCount[1];
+def dataCountb = if !IsNaN(cond[b]) == 1 then  dataCountb[1] + 1 else dataCountb[1];
+
+AddChartBubble(showBubbles_Limited_by_Count and HighestAll(dataCount) - dataCount != 0 and       HighestAll(dataCount) - dataCount - 1 <= bubble_limit - 2 and !IsNaN(hour) and !IsNaN(cond[1]) == 0 and !IsNaN(cond) == 1,
+    high + TickSize() * updown_bubblemover,
+    hour + ":" +
+    if minutes < 10
+    then "0" + minutes
+    else "" + minutes , Color.WHITE, yes);
+
+
+#Example of Drawing a Line between the last offset bubble and the bar it is referencing
+
+input show_Last_Bubble_Limited_by_Count = yes;
+
+AddChartBubble(show_Last_Bubble_Limited_by_Count and HighestAll(dataCountb) - dataCountb <= 0 and !IsNaN(hour[b]) == 1 and  !IsNaN(cond[b1]) == 0 and !IsNaN(cond[b]) == 1,
+    high[b1] + TickSize() * updown_bubblemover,
+    hour[b]  + ":" +
+    if minutes[b] < 10
+    then "0" + minutes[b]
+    else "" + minutes[b] , Color.WHITE, yes);
+
+plot hh  = if HighestAll(dataCount) - dataCount <= 1 - 1 and !IsNaN(cond) == 1
+           then high
+           else Double.NaN;
+plot hh1 = if HighestAll(dataCountb) - dataCountb <= 1 - 1 and !IsNaN(cond[b]) == 1
+           then high[b1] + TickSize() * updown_bubblemover
+           else Double.NaN;
+plot hhline = if !IsNaN(cond[b]) == 1 then hh1 else if !IsNaN(cond) == 1 then hh else Double.NaN;
+hhline.SetDefaultColor( Color.WHITE);
+hhline.EnableApproximation();
+hhline.SetLineWeight(3);

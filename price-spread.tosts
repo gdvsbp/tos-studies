@@ -16,8 +16,6 @@ script dynamic{
            else Double.Nan;
 }
 
-def Mark = close(priceType = "Mark");
-def Last = close(priceType = "Last");
 def BidData = close(priceType = PriceType.BID);
 def AskData = close(priceType = PriceType.ASK);
 

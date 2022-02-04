@@ -1,13 +1,41 @@
+Input LineLimit = 200;
+
+script dynamic{
+   Input LineLimit = 200;
+   input c = close;
+   def bar = if IsNaN(c)
+             then bar[1]
+             else BarNumber();
+   def ThisBar = HighestAll(bar);
+   def cLine   = if bar == ThisBar
+                 then c
+                 else Double.NaN;
+
+  plot P = if ThisBar - LineLimit <= bar
+           then HighestAll(cLine)
+           else Double.Nan;
+}
+
+def Mark = close(priceType = "Mark");
+def Last = close(priceType = "Last");
 def BidData = close(priceType = PriceType.BID);
 def AskData = close(priceType = PriceType.ASK);
 
-plot Bid = HighestAll(if IsNaN(BidData[-1]) and !IsNaN(BidData) then BidData else Double.NaN);
+plot Bid = dynamic(linelimit = linelimit, c = BidData);
 Bid.SetDefaultColor(Color.UPTICK);
-Bid.SetPaintingStrategy(PaintingStrategy.DASHES);
+Bid.SetPaintingStrategy(PaintingStrategy.SQUARES);
+Bid.SetStyle(Curve.FIRM);
 
-plot Ask = HighestAll(if IsNaN(AskData[-1]) and !IsNaN(AskData) then AskData else Double.NaN);
+plot Ask = dynamic(linelimit = linelimit, c = AskData);
 Ask.SetDefaultColor(Color.DOWNTICK);
-Ask.SetPaintingStrategy(PaintingStrategy.DASHES);
+Ask.SetPaintingStrategy(PaintingStrategy.SQUARES);
+Ask.SetStyle(Curve.FIRM);
 
 AddChartBubble(GetTime()[-1] == 0, Bid, "Bid $" + Bid, Color.UPTICK, if (Bid > Ask) then yes else no);
 AddChartBubble(GetTime()[-1] == 0, Ask, "Ask $" + Ask, Color.DOWNTICK, if (Bid < Ask) then yes else no);
+
+def Dir = if AskData == BidData then 1 else 0;
+def NotDir = if (AskData != BidData) or (AskData != Ask) then 1 else 0;
+AddCloud(if Dir then Ask else Double.NaN, if Dir then Bid else Double.NaN, Color.Green, Color.Current);
+AddCloud(if !Dir then Ask else Double.NaN,if !Dir then Bid else Double.NaN, Color.Red, Color.Current);
+AddCloud(if NotDir then Ask else Double.NaN, Bid, Color.Gray, Color.Current);

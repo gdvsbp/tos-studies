@@ -1,0 +1,13 @@
+def BidData = close(priceType = PriceType.BID);
+def AskData = close(priceType = PriceType.ASK);
+
+plot Bid = HighestAll(if IsNaN(BidData[-1]) and !IsNaN(BidData) then BidData else Double.NaN);
+Bid.SetDefaultColor(Color.UPTICK);
+Bid.SetPaintingStrategy(PaintingStrategy.DASHES);
+
+plot Ask = HighestAll(if IsNaN(AskData[-1]) and !IsNaN(AskData) then AskData else Double.NaN);
+Ask.SetDefaultColor(Color.DOWNTICK);
+Ask.SetPaintingStrategy(PaintingStrategy.DASHES);
+
+AddChartBubble(GetTime()[-1] == 0, Bid, "Bid $" + Bid, Color.UPTICK, if (Bid > Ask) then yes else no);
+AddChartBubble(GetTime()[-1] == 0, Ask, "Ask $" + Ask, Color.DOWNTICK, if (Bid < Ask) then yes else no);

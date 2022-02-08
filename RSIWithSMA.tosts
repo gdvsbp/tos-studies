@@ -13,6 +13,8 @@ input averageType = AverageType.WILDERS;
 input showBreakoutSignals = no;
 input rsiMALength = 5; #hint rsiMALength: RSI Moving Average Length
 input rsiAverageType = AverageType.SIMPLE;
+input rsiCrossDown = 60;
+input rsiCrossUp = 40;
 
 def NetChgAvg = MovingAverage(averageType, price - price[1], length);
 def TotChgAvg = MovingAverage(averageType, AbsValue(price - price[1]), length);
@@ -28,6 +30,11 @@ plot DownSignal = if RSI crosses below OverBought then OverBought else Double.Na
 def rsiMA = MovingAverage(rsiAverageType, RSI, rsiMALength);
 plot prsiMA = rsiMA;
 
+plot XoverSignalUp = if (RSI crosses above rsiMA and rsiMA <= rsiCrossUp) then rsiMA else Double.NaN;
+plot XoverSignalDn = if (RSI crosses below rsiMA and rsiMA >= rsiCrossDown) then rsiMA else Double.NaN;
+
+Alert((RSI crosses above rsiMA and rsiMA <= rsiCrossUp) or (RSI crosses below rsiMA and rsiMA >= rsiCrossDown), "RSI SMA crossover. RSI: " + RSI + ", SMA: " + rsiMA, Alert.Bar, Sound.Bell);
+
 UpSignal.SetHiding(!showBreakoutSignals);
 DownSignal.SetHiding(!showBreakoutSignals);
 
@@ -41,3 +48,8 @@ UpSignal.SetDefaultColor(Color.UPTICK);
 UpSignal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
 DownSignal.SetDefaultColor(Color.DOWNTICK);
 DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
+
+XoverSignalUp.SetDefaultColor(Color.WHITE);
+XoverSignalUp.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
+XoverSignalDn.SetDefaultColor(Color.WHITE);
+XoverSignalDn.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);

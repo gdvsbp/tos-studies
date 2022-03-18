@@ -1,34 +1,62 @@
 # Multiple Price Lines for S/R levels
 
 # user input
-input s1 = 420.69;
-input s2 = 420.69;
-input s3 = 420.69;
-input s4 = 420.69;
-
-input r1 = 480.69;
-input r2 = 480.69;
-input r3 = 480.69;
+input r5 = 480.69;
+input r5maj = no;
 input r4 = 480.69;
+input r4maj = no;
+input r3 = 480.69;
+input r3maj = no;
+input r2 = 480.69;
+input r2maj = no;
+input r1 = 480.69;
+input r1maj = no;
+
+input s1 = 420.69;
+input s1maj = no;
+input s2 = 420.69;
+input s2maj = no;
+input s3 = 420.69;
+input s3maj = no;
+input s4 = 420.69;
+input s4maj = no;
+input s5 = 420.69;
+input s5maj = no;
+
 
 # determines where lines will be drawn
 plot support1 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s1 else Double.NaN);
+support1.SetLineWeight(if s1maj then 2 else 1);
 plot support2 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s2 else Double.NaN);
+support2.SetLineWeight(if s2maj then 2 else 1);
 plot support3 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s3 else Double.NaN);
+support3.SetLineWeight(if s3maj then 2 else 1);
 plot support4 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s4 else Double.NaN);
+support4.SetLineWeight(if s4maj then 2 else 1);
+plot support5 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then s5 else Double.NaN);
+support5.SetLineWeight(if s5maj then 2 else 1);
 
 plot resistance1 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r1 else Double.NaN);
+resistance1.SetLineWeight(if r1maj then 2 else 1);
 plot resistance2 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r2 else Double.NaN);
+resistance2.SetLineWeight(if r2maj then 2 else 1);
 plot resistance3 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r3 else Double.NaN);
+resistance3.SetLineWeight(if r3maj then 2 else 1);
 plot resistance4 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r4 else Double.NaN);
+resistance4.SetLineWeight(if r4maj then 2 else 1);
+plot resistance5 = HighestAll(if IsNaN(close[-1]) and !IsNaN(close) then r5 else Double.NaN);
+resistance5.SetLineWeight(if r5maj then 2 else 1);
+
 
 # Set Color of Lines
-support1.SetDefaultColor(color = Color.Red);
-support2.SetDefaultColor(color = Color.Red);
-support3.SetDefaultColor(color = Color.Red);
-support4.SetDefaultColor(color = Color.Red);
+support1.SetDefaultColor(color = Color.GRAY);
+support2.SetDefaultColor(color = Color.GRAY);
+support3.SetDefaultColor(color = Color.GRAY);
+support4.SetDefaultColor(color = Color.GRAY);
+support5.SetDefaultColor(color = Color.GRAY);
 
-resistance1.SetDefaultColor(color = Color.Cyan);
-resistance2.SetDefaultColor(color = Color.Cyan);
-resistance3.SetDefaultColor(color = Color.Cyan);
-resistance4.SetDefaultColor(color = Color.Cyan);
+resistance1.SetDefaultColor(color = Color.GRAY);
+resistance2.SetDefaultColor(color = Color.GRAY);
+resistance3.SetDefaultColor(color = Color.GRAY);
+resistance4.SetDefaultColor(color = Color.GRAY);
+resistance5.SetDefaultColor(color = Color.GRAY);

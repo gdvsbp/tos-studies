@@ -1,0 +1,28 @@
+# TODO: log target entry and exit based on prior bar instead of -2/-1/0/1/2
+
+def haClose = ohlc4;
+def haOpen = (haOpen[1] + haClose[1]) / 2;
+def haTrendUp = if haClose >= haOpen then 1 else 0;
+def haTrendDn = if haClose < haOpen then 1 else 0;
+def haSignal =
+  if haTrendUp == 1 and haTrendUp[1] == 1 then 1
+  else if haTrendDn == 1 and haTrendDn[1] == 1 then -1
+  else 0
+;
+def wasDoji =
+    if (haOpen[1] < high[1] and haClose[1] < high[1]) and (haClose[1] > low[1] and haOpen[1] > low[1]) then 1 else 0;
+
+def isDoji =
+    if (haOpen[0] < high[0] and haClose[0] < high[0]) and (haClose[0] > low[0] and haOpen[0] > low[0]) then 1 else 0;
+
+
+
+plot main =
+    if isDoji then 0
+    else if wasDoji and haTrendUp then 1
+    else if wasDoji and haTrendDn then -1
+    else if haTrendUp[1] and haTrendDn then 2
+    else if haTrendDn[1] and haTrendUp then -2
+    else 0;
+
+# END - Heikin_Ashi_Trend_Do

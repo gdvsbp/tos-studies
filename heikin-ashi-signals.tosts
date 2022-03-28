@@ -2,7 +2,7 @@
 
 def haClose = ohlc4;
 def haOpen = (haOpen[1] + haClose[1]) / 2;
-def haTrendUp = if haClose >= haOpen then 1 else 0;
+def haTrendUp = if haClose > haOpen then 1 else 0;
 def haTrendDn = if haClose < haOpen then 1 else 0;
 def haSignal =
   if haTrendUp == 1 and haTrendUp[1] == 1 then 1
@@ -15,14 +15,26 @@ def wasDoji =
 def isDoji =
     if (haOpen[0] < high[0] and haClose[0] < high[0]) and (haClose[0] > low[0] and haOpen[0] > low[0]) then 1 else 0;
 
-
+def goLong = wasDoji and haTrendUp;
+def goShort = wasDoji and haTrendDn;
 
 plot main =
     if isDoji then 0
-    else if wasDoji and haTrendUp then 1
-    else if wasDoji and haTrendDn then -1
-    else if haTrendUp[1] and haTrendDn then 2
-    else if haTrendDn[1] and haTrendUp then -2
-    else 0;
+    else if goLong then 1
+    else if goShort then -1
+    else Double.NaN;
+
+main.SetPaintingStrategy(PaintingStrategy.VALUES_ABOVE);
+
+def enterLevel = Round(ohlc4, 2);
+
+# Long alert
+# TODO: this last bit shows an X if the signal's move is shorter than ATR, but it doesn't seem to work yet
+AddChartBubble(main == 1, haOpen, "Long in $" + enterLevel + ", stp $" + Round(low, 2) + " - " + ( if (ATR() < (high - low)) then "X" else ""), Color.UPTICK, no);
+Alert((main == 1), "Long in $" + enterLevel + ", stp $" + Round(low, 2) + " - " + ( if (ATR() < (high - low)) then "X" else ""), Alert.Bar, Sound.Bell);
+
+# Short alert
+AddChartBubble(main == -1, haClose, "Short in $" + enterLevel + ", stp $" + Round(high, 2) + " - " + ( if (ATR() < (high - low)) then "X" else ""), Color.DOWNTICK, no);
+Alert((main == -1), "Short in $" + enterLevel + ", stp $" + Round(high, 2) + " - " + ( if (ATR() < (high - low)) then "X" else ""), Alert.Bar, Sound.Bell);
 
 # END - Heikin_Ashi_Trend_Do

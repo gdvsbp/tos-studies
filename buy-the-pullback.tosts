@@ -1,0 +1,24 @@
+plot ema5 = ExpAverage(close, 5);
+ema5.SetDefaultColor(Color.WHITE);
+plot ema8 = ExpAverage(close, 8);
+ema8.SetDefaultColor(Color.CYAN);
+plot ema20 = ExpAverage(close, 20);
+ema20.SetDefaultColor(Color.MAGENTA);
+plot ema50 = ExpAverage(close, 50);
+ema50.SetDefaultColor(Color.PLUM);
+
+# bullish continuation buy
+def bullishContinuation = (ema20[1] < ema20[0] and ema5[1] > ema8[1] and ema5[0] >= ema8[0] and close[1] > open[1] and close[0] < open[0]);
+Alert(bullishContinuation, "Long $" + close[0], Alert.Bar, Sound.Ring);
+
+plot bullBuy = if (bullishContinuation) then yes else no;
+bullBuy.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+bullBuy.SetDefaultColor(Color.UPTICK);
+
+# bearish continuation buy
+def bearishContinuation = (ema20[1] > ema20[0] and ema5[1] < ema8[1] and ema5[0] <= ema8[0] and close[1] < open[1] and close[0] > open[0]);
+Alert(bearishContinuation, "Short $" + close[0], Alert.Bar, Sound.Ding);
+
+plot bearBuy = if (bearishContinuation) then yes else no;
+bearBuy.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+bearBuy.SetDefaultColor(Color.DOWNTICK);

@@ -27,14 +27,15 @@ plot main =
 main.SetPaintingStrategy(PaintingStrategy.VALUES_ABOVE);
 
 def enterLevel = Round(ohlc4, 2);
+def isSignificant = ( if (ATR() < (high - low)) then yes else no);
 
 # Long alert
 # TODO: this last bit shows an X if the signal's move is shorter than ATR, but it doesn't seem to work yet
-AddChartBubble(main == 1, haOpen, "Long in $" + enterLevel + ", stp $" + Round(low, 2) + " - " + ( if (ATR() < (high - low)) then "X" else ""), Color.UPTICK, no);
-Alert((main == 1), "Long in $" + enterLevel + ", stp $" + Round(low, 2) + " - " + ( if (ATR() < (high - low)) then "X" else ""), Alert.Bar, Sound.Bell);
+AddChartBubble(main == 1 and isSignificant, haOpen, "In $" + enterLevel + ", stp $" + Round(low, 2), Color.UPTICK, no);
+Alert((main == 1 and isSignificant), "Long in $" + enterLevel + ", stp $" + Round(low, 2), Alert.Bar, Sound.Bell);
 
 # Short alert
-AddChartBubble(main == -1, haClose, "Short in $" + enterLevel + ", stp $" + Round(high, 2) + " - " + ( if (ATR() < (high - low)) then "X" else ""), Color.DOWNTICK, no);
-Alert((main == -1), "Short in $" + enterLevel + ", stp $" + Round(high, 2) + " - " + ( if (ATR() < (high - low)) then "X" else ""), Alert.Bar, Sound.Bell);
+AddChartBubble(main == -1 and isSignificant, haClose, "In $" + enterLevel + ", stp $" + Round(high, 2), Color.DOWNTICK, no);
+Alert((main == -1 and isSignificant), "Short in $" + enterLevel + ", stp $" + Round(high, 2), Alert.Bar, Sound.Bell);
 
 # END - Heikin_Ashi_Trend_Do

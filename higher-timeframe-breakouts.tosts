@@ -1,0 +1,45 @@
+#--------------------------------------------------------
+# H I G H E R   T I M E F R A M E   B R E A K O U T S
+#
+# Pojects high/low from prior day and hour onto current
+# short-timeframe chart to demonstrate where price action is
+# occurring relative to bigger-picture movements.
+#--------------------------------------------------------
+
+def hiHour = high(period = AggregationPeriod.HOUR);
+def loHour = low(period = AggregationPeriod.HOUR);
+
+def hiDay = high(period = AggregationPeriod.DAY);
+def loDay = low(period = AggregationPeriod.DAY);
+
+plot TimeFrameHourHigh = hiHour[1];
+TimeFrameHourHigh.SetPaintingStrategy(PaintingStrategy.LINE);
+TimeFrameHourHigh.SetLineWeight(2);
+TimeFrameHourHigh.SetDefaultColor(Color.UPTICK);
+
+plot TimeFrameHourLow = loHour[1];
+TimeFrameHourLow.SetPaintingStrategy(PaintingStrategy.LINE);
+TimeFrameHourLow.SetLineWeight(2);
+TimeFrameHourLow.SetDefaultColor(Color.DOWNTICK);
+
+plot TimeFrameDayHigh = hiDay[1];
+TimeFrameDayHigh.SetPaintingStrategy(PaintingStrategy.LINE);
+TimeFrameDayHigh.SetLineWeight(3);
+TimeFrameDayHigh.SetDefaultColor(Color.UPTICK);
+
+plot TimeFrameDayLow = loDay[1];
+TimeFrameDayLow.SetPaintingStrategy(PaintingStrategy.LINE);
+TimeFrameDayLow.SetLineWeight(3);
+TimeFrameDayLow.SetDefaultColor(Color.DOWNTICK);
+
+plot BreakOverSignals = if ((low < TimeFrameHourHigh and close > TimeFrameHourHigh) or (low < TimeFrameDayHigh and close > TimeFrameDayHigh)) then yes else no;
+BreakOverSignals.SetPaintingStrategy(PaintingStrategy.BOOLEAN_WEDGE_UP);
+BreakOverSignals.SetDefaultColor(Color.UPTICK);
+
+Alert(BreakOverSignals[0], "Break over last hourly/daily high", Alert.Bar, Sound.Ding);
+
+plot FallUnderSignals = if ((high > TimeFrameHourLow and close < TimeFrameHourLow) or (high > TimeFrameDayLow and close < TimeFrameDayLow)) then yes else no;
+FallUnderSignals.SetPaintingStrategy(PaintingStrategy.BOOLEAN_WEDGE_DOWN);
+FallUnderSignals.SetDefaultColor(Color.DOWNTICK);
+
+Alert(FallUnderSignals[0], "Fall under last hourly/daily low", Alert.Bar, Sound.Ding);

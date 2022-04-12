@@ -1,0 +1,25 @@
+def H = high;
+def L = low;
+def C = close;
+def O = open;
+
+
+def insidebar =  (H < H[1] and L > L[1]) or (H == H[1] and L > L[1]) or (H < H[1] and L == L[1]) or (H == H[1] and L == L[1]);
+def outsidebar =  H  > H[1] and L <  L[1];
+
+plot InsideUp = if C > C[1] and insidebar then yes else no;
+InsideUp.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+InsideUp.setDefaultColor(Color.YELLOW);
+
+plot InsideDown = if C < C[1] and insidebar then yes else no;
+InsideDown.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+InsideDown.setDefaultColor(Color.YELLOW);
+
+plot OutsideUp = if C > C[1] and outsidebar then yes else no;
+OutsideUp.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+OutsideUp.setDefaultColor(Color.MAGENTA);
+
+plot OutsideDown = if C < C[1] and outsidebar then yes else no;
+OutsideDown.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+OutsideDown.setDefaultColor(Color.MAGENTA);
+

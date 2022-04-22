@@ -1,0 +1,60 @@
+
+#-----------------------------------------------------
+#
+#       S I M P L E
+#    C A N D L E      O V E R L A Y
+#
+# Open line red/green for visualizing FTC
+#
+#
+# a STRAT study by Ramon DV. aka Pelonsax
+# based on Rob Smith's The STRAT
+# Original Candle Overlay concept by Paul Townsend
+#
+#-----------------------------------------------------
+DECLARE UPPER;
+#------------------------------------
+# MTF SECTION
+#------------------------------------
+input AddOutline = yes;
+input Time_Frame = AggregationPeriod.FIFTEEN_MIN;
+plot H = high(period = Time_Frame);
+H.setDefaultColor(color.gray);
+H.setHiding(!AddOutline);
+plot L = low(period = Time_Frame);
+L.setDefaultColor(color.gray);
+L.setHiding(!AddOutline);
+def O = open(period = Time_Frame);
+def C = close(period = Time_Frame);
+
+plot zeroline = O;
+zeroline.AssignValueColor(if C > O then color.green else if C < O then color.red else color.white);
+zeroline.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+#------------------------------------
+# ADD CLOUDS
+#------------------------------------
+input addcloud = yes;
+def side = if side[1] == 1 then 2 else 1;
+def sider = side;
+
+DefineGlobalColor("Up", CreateColor(000, 97, 0));
+DefineGlobalColor("Down", CreateColor(97, 000, 000));
+
+AddCloud( if addcloud and sider == 2 and C > O then H else Double.NaN, if sider == 2 and C > O then L else Double.NaN, GlobalColor("Up"), GlobalColor("Up"));
+
+AddCloud( if addcloud and sider == 2 and C < O then H else Double.NaN, if sider == 2 and C < O then L else Double.NaN, GlobalColor("Down"), GlobalColor("Down"));
+
+AddCloud( if addcloud and sider == 2 and C == O then H else Double.NaN, if sider == 2 and C == O then L else Double.NaN, color.white, color.white);
+
+AddCloud( if addcloud and sider == 1  and C > O then H else Double.NaN, if sider == 1  and C > O then L else Double.NaN, GlobalColor("Up"), GlobalColor("Up"));
+
+AddCloud( if addcloud and sider == 1  and C < O then H else Double.NaN, if sider == 1  and C < O then L else Double.NaN, GlobalColor("Down"), GlobalColor("Down"));
+
+AddCloud( if addcloud and sider == 1  and C == O then H else Double.NaN, if sider == 1  and C == O then L else Double.NaN, color.white, color.white);
+#------------------------------------
+# ADD LABEL
+#------------------------------------
+input Show_Label = yes;
+AddLabel(Show_Label, Concat(if Time_Frame < 3600000 then Time_Frame / 60000 + "m" else if Time_Frame < 86400000 then Time_Frame / 3600000 + "h" else if Time_Frame < 604800000 then Time_Frame / 86400000 + "D" else if Time_Frame < 2592000000 then Time_Frame / 604800000 + "Wk" else if Time_Frame < 31536000000 then Time_Frame / 2592000000 + "Mo" else Time_Frame / 31536000000 + "Yr", if Time_Frame then " CANDLES" else ""), Color.light_Gray);
+
+# end

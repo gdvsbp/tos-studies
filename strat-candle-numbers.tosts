@@ -1,0 +1,165 @@
+#------------------------------------
+# S T R A T    N U M B E R S
+#
+# A study by Ramon DV. aka Pelonsax
+#
+# Version 1.0  8/01/20
+#
+# Version 2.0 8/4/20 Corrected errors in logic for scenarios
+#
+#------------------------------------
+#------------------------------------
+# DEFINE SCENARIOS
+#------------------------------------
+def H = high;
+def L = low;
+def C = close;
+def O = open;
+
+
+def insidebar =  (H < H[1] and L > L[1]) or (H == H[1] and L > L[1]) or (H < H[1] and L == L[1]) or (H == H[1] and L == L[1]);
+def outsidebar =  H  > H[1] and L <  L[1];
+def twoup  = H > H[1] and L >= L[1];
+def twodown  = H <= H[1] and L < L[1];
+
+def half = (H[1] + L[1]) / 2;
+def stratRiskRewardThreshhold = 0.8;
+
+#------------------------------------
+# STRAT NUMBERS
+#------------------------------------
+input Show_Strat_Numbers = yes;
+input Show_Twos = yes;
+plot barType = if Show_Strat_Numbers and insidebar then 1 else if Show_Strat_Numbers and outsidebar then 3 else Double.NaN;
+barType.SetPaintingStrategy(PaintingStrategy.VALUES_BELOW);
+barType.AssignValueColor(if barType == 1 then color.YELLOW else color.MAGENTA);
+
+plot barTypeDN = if Show_Strat_Numbers and !insidebar and !outsidebar and Show_Twos and twodown then 2 else Double.NaN;
+barTypeDN.SetPaintingStrategy(PaintingStrategy.VALUES_BELOW);
+barTypeDN.AssignValueColor(color.DOWNTICK);
+
+plot barTypeUP = if Show_Strat_Numbers and !insidebar and !outsidebar and Show_Twos and twoup then 2 else Double.NaN;
+barTypeUP.SetPaintingStrategy(PaintingStrategy.VALUES_ABOVE);
+barTypeUP.AssignValueColor(color.UPTICK);
+
+AssignPriceColor(if insidebar then Color.YELLOW else if outsidebar then Color.MAGENTA else Color.CURRENT);
+
+#--------------------------------------------------
+# Border lines
+#--------------------------------------------------
+# plot Halfway = half;
+# Halfway.SetPaintingStrategy(PaintingStrategy.DASHES);
+# Halfway.SetDefaultColor(Color.WHITE);
+# Halfway.SetLineWeight(3);
+
+# plot BroadeningTopLimit = if barType[1] == 3 then (H[1] + (H[1] - H[2])) else Double.NaN;
+# BroadeningTopLimit.SetPaintingStrategy(PaintingStrategy.DASHES);
+# BroadeningTopLimit.SetDefaultColor(Color.GREEN);
+# BroadeningTopLimit.SetLineWeight(3);
+
+# plot BroadeningBtmLimit = if barType[1] == 3 then (L[1] + (L[1] - L[2])) else Double.NaN;
+# BroadeningBtmLimit.SetPaintingStrategy(PaintingStrategy.DASHES);
+# BroadeningBtmLimit.SetDefaultColor(Color.RED);
+# BroadeningBtmLimit.SetLineWeight(3);
+
+def bullishContinuation212U = if (barType[2] != 1 and barType[2] != 3) and (O[2] < C[2]) and barType[1] == 1 then yes else no;
+def bullishReversal212U = if (barType[2] != 1 and barType[2] != 3) and (O[2] > C[2]) and barType[1] == 1 then yes else no;
+def bullishReversal312U = if (barType[2] == 3) and (O[2] > C[2]) and barType[1] == 1 then yes else no;
+def bullishReversal2D2U = if (barTypeDN[1] == 2) and (O[2] < C[2]) then yes else no;
+
+def bearishContinuation212U = if (barType[2] != 1 and barType[2] != 3) and (O[2] > C[2]) and barType[1] == 1 then yes else no;
+def bearishReversal212U = if (barType[2] != 1 and barType[2] != 3) and (O[2] < C[2]) and barType[1] == 1 then yes else no;
+def bearishReversal312U = if (barType[2] == 3) and (O[2] < C[2]) and barType[1] == 1 then yes else no;
+def bearishReversal2U2D = if (barTypeUP[1] == 2) and (O[2] > C[2]) then yes else no;
+
+# plot Entry = half;
+# Entry.SetPaintingStrategy(PaintingStrategy.DASHES);
+# Entry.SetDefaultColor(Color.WHITE);
+# Entry.SetLineWeight(3);
+
+
+
+plot L1 =
+  if bullishContinuation212U
+    then H[2]
+  else if bullishReversal212U
+    then H[2]
+  else if bullishReversal312U
+    then H[2]
+  else if bearishContinuation212U
+    then H[1]
+  else if bearishReversal212U
+    then H[1]
+  else if bearishReversal312U
+    then H[1]
+  else if bullishReversal2D2U
+    then H[2]
+  else if bearishReversal2U2D
+    then H[1]
+  else Double.NaN;
+L1.SetPaintingStrategy(PaintingStrategy.DASHES);
+L1.SetDefaultColor(Color.CYAN);
+L1.SetLineWeight(3);
+
+plot L2 =
+  if bullishContinuation212U
+    then H[1]
+  else if bullishReversal212U
+    then H[1]
+  else if bullishReversal312U
+    then H[1]
+  else if bearishContinuation212U
+    then L[1]
+  else if bearishReversal212U
+    then L[1]
+  else if bearishReversal312U
+    then L[1]
+  else if bullishReversal2D2U
+    then H[1]
+  else if bearishReversal2U2D
+    then L[1]
+  else Double.NaN;
+L2.SetPaintingStrategy(PaintingStrategy.DASHES);
+L2.SetDefaultColor(Color.ORANGE);
+L2.SetLineWeight(3);
+
+plot L3 =
+  if bullishContinuation212U
+    then L[1]
+  else if bullishReversal212U
+    then L[1]
+  else if bullishReversal312U
+    then L[1]
+  else if bearishContinuation212U
+    then L[2]
+  else if bearishReversal212U
+    then L[2]
+  else if bearishReversal312U
+    then L[2]
+  else if bullishReversal2D2U
+    then L[1]
+  else if bearishReversal2U2D
+    then L[2]
+  else Double.NaN;
+L3.SetPaintingStrategy(PaintingStrategy.DASHES);
+L3.SetDefaultColor(Color.DARK_ORANGE);
+L3.SetLineWeight(3);
+
+
+plot L4 =
+  if bullishReversal312U
+    then L[2]
+  else if bearishReversal312U
+    then H[2]
+  else Double.NaN;
+L4.SetPaintingStrategy(PaintingStrategy.DASHES);
+L4.SetDefaultColor(Color.PLUM);
+L4.SetLineWeight(3);
+
+
+# AddChartBubble(
+#   bearishContinuationBullishReversal or bullishReversal32d2u,
+#   Max(H[0], Max(H[1], H[2])), Round(AbsValue(BullTarget[0] - BullEnter[0]) / AbsValue(BullEnter[0] - BearEnter[0]), 1), Color.GREEN, yes);
+# AddChartBubble(bullishContinuationBearishReversal, Min(L[0], Min(L[1], L[2])), Round(AbsValue(BearTarget[0] - BearEnter[0]) / AbsValue(BearEnter[0] - BullEnter[0]), 1), Color.RED, no);
+AddChartBubble(bullishContinuation212U or bullishReversal212U or bullishReversal312U or bullishReversal2D2U, Max(H[0], Max(H[1], H[2])), "*", Color.GREEN, yes);
+AddChartBubble(bearishContinuation212U or bearishReversal212U or bearishReversal312U or bearishReversal2U2D, Min(L[0], Min(L[1], L[2])), "*", Color.RED, no);

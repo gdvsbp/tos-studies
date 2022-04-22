@@ -1,0 +1,17 @@
+#Multiple EMA Cloud
+#For Stock Analysis : http://TheTopList.com
+input ema1low = 5;
+input ema1high = 13;
+input ema2low = 34;
+input ema2high = 50;
+input ema3low = 72;
+input ema3high = 89;
+def ema5 = ExpAverage(close, ema1low);
+ def ema13 = ExpAverage(close, ema1high);
+AddCloud(ema5, ema13, CreateColor(35, 232, 161), CreateColor(247, 224, 89));
+def ema34 = ExpAverage(close, ema2low);
+def ema50 = ExpAverage(close, ema2high);
+AddCloud(ema34, ema50, CreateColor(51, 218, 255), CreateColor(255, 160, 71));
+def ema72 = ExpAverage(close, ema3low);
+def ema89 = ExpAverage(close, ema3high);
+AddCloud(ema72, ema89, CreateColor(60, 117, 250), CreateColor(232, 55, 91));

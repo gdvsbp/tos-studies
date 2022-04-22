@@ -1,0 +1,17 @@
+input Length = 40;
+
+DefineGlobalColor("Mint", CreateColor(143, 240, 191));
+def dsma = reference DeviationScaledMovAvg(length = Length);
+
+plot PDSMA = dsma;
+PDSMA.setDefaultColor(GlobalColor("Mint"));
+
+plot DSMACrossOver = if close[1] < PDSMA[1] and close[0] > PDSMA[0] then yes else no;
+DSMACrossOver.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+DSMACrossOver.setDefaultColor(GlobalColor("Mint"));
+Alert(DSMACrossOver, "Cross Above DSMA", Alert.Bar, Sound.Ding);
+
+plot DSMACrossUnder = if close[1] > PDSMA[1] and close[0] < PDSMA[0] then yes else no;
+DSMACrossUnder.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+DSMACrossUnder.setDefaultColor(GlobalColor("Mint"));
+Alert(DSMACrossUnder, "Cross Under DSMA", Alert.Bar, Sound.Ding);

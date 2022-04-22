@@ -23,3 +23,82 @@ plot OutsideDown = if C < C[1] and outsidebar then yes else no;
 OutsideDown.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
 OutsideDown.setDefaultColor(Color.MAGENTA);
 
+
+plot BroadeningTop =
+  if OutsideUp[-1] or OutsideDown[-1]
+    then Double.NaN
+  else if OutsideUp[0] or OutsideDown[0]
+    then H[0]
+  else if OutsideUp[1] or OutsideDown[1]
+    then H[1] + (H[1] - H[2]) * 1
+  else if OutsideUp[2] or OutsideDown[2]
+    then H[2] + (H[2] - H[3]) * 2
+  else if OutsideUp[3] or OutsideDown[3]
+    then H[3] + (H[3] - H[4]) * 3
+  else Double.NaN;
+BroadeningTop.setDefaultColor(Color.MAGENTA);
+
+plot BroadeningBtm =
+  if OutsideUp[-1] or OutsideDown[-1]
+    then Double.NaN
+  else if OutsideUp[0] or OutsideDown[0]
+    then L[0]
+  else if OutsideUp[1] or OutsideDown[1]
+    then L[1] + (L[1] - L[2]) * 1
+  else if OutsideUp[2] or OutsideDown[2]
+    then L[2] + (L[2] - L[3]) * 2
+  else if OutsideUp[3] or OutsideDown[3]
+    then L[3] + (L[3] - L[4]) * 3
+  else Double.NaN;
+BroadeningBtm.setDefaultColor(Color.MAGENTA);
+
+plot BroadeningMid =
+  if OutsideUp[-1] or OutsideDown[-1]
+    then Double.NaN
+  else if OutsideUp[0] or OutsideDown[0]
+    then (L[0] + H[0]) / 2
+  else if OutsideUp[1] or OutsideDown[1]
+    then (L[1] + H[1]) / 2
+  else if OutsideUp[2] or OutsideDown[2]
+    then (L[2] + H[2]) / 2
+  else if OutsideUp[3] or OutsideDown[3]
+    then (L[3] + H[3]) / 2
+  else Double.NaN;
+BroadeningMid.setDefaultColor(Color.MAGENTA);
+
+
+plot InsideBreakoutTopTarget =
+  if InsideUp[1] or InsideDown[1]
+    then H[2]
+  else if InsideUp[0] or InsideDown[0]
+    then H[1]
+  else Double.NaN;
+InsideBreakoutTopTarget.setDefaultColor(Color.YELLOW);
+InsideBreakoutTopTarget.setPaintingStrategy(PaintingStrategy.HORIZONTAL);
+
+plot InsideBreakoutTopEntry =
+  if InsideUp[1] or InsideDown[1]
+    then H[1]
+  else if InsideUp[0] or InsideDown[0]
+    then H[0]
+  else Double.NaN;
+InsideBreakoutTopEntry.setDefaultColor(Color.YELLOW);
+InsideBreakoutTopEntry.setPaintingStrategy(PaintingStrategy.HORIZONTAL);
+
+plot InsideBreakoutBtmTarget =
+  if InsideUp[1] or InsideDown[1]
+    then L[2]
+  else if InsideUp[0] or InsideDown[0]
+    then L[1]
+  else Double.NaN;
+InsideBreakoutBtmTarget.setDefaultColor(Color.YELLOW);
+InsideBreakoutBtmTarget.setPaintingStrategy(PaintingStrategy.HORIZONTAL);
+
+plot InsideBreakoutBtmEntry =
+  if InsideUp[1] or InsideDown[1]
+    then L[1]
+  else if InsideUp[0] or InsideDown[0]
+    then L[0]
+  else Double.NaN;
+InsideBreakoutBtmEntry.setDefaultColor(Color.YELLOW);
+InsideBreakoutBtmEntry.setPaintingStrategy(PaintingStrategy.HORIZONTAL);

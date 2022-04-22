@@ -1,0 +1,52 @@
+input price = close;#hint price: The price used to calculate the crossover. <b>(Default is CLOSE)</b>
+input fastLength = 8;#hint fastLength: The number of bars used to calculate the fast moving average. <b>(Default is 3)</b>
+input slowLength = 21;#hint slowLength: The number of bars used to calculate the slow moving average. <b>(Default is 8)</b>
+input slowAvgType = {default Simple, Exponential, Weighted, Wilders, Hull};#hint slowAvgType: Type of the fast moving average to be used for calculation. <b>(Default is Expontential)</b>
+input fastAvgType = {default Simple, Exponential, Weighted, Wilders, Hull};#hint fastAvgType: Type of the fast moving average to be used for calculation. <b>(Default is Exponential)</b>
+Input DoPlots = yes;#hint DoPlots: Yes shows MA plots to define crosses. Default is 'YES'
+Assert( fastLength < slowLength, "fastLength ["+fastLength+"] must be less than slowLength["+slowLength+"]");
+
+def fastAvg;
+switch (slowAvgType) {
+case Simple:
+    fastAvg = Average(price, fastLength);
+case Exponential:
+    fastAvg = ExpAverage(price, fastLength);
+case Weighted:
+    fastAvg = wma(price, fastLength);
+case Wilders:
+    fastAvg = WildersAverage(price, fastLength);
+case Hull:
+    fastAvg = HullMovingAvg(price, fastLength);
+}
+
+def slowAvg;
+switch (fastAvgType) {
+case Simple:
+    slowAvg = Average(price, slowLength);
+case Exponential:
+    slowAvg = ExpAverage(price, slowLength);
+case Weighted:
+    slowAvg = wma(price, slowLength);
+case Wilders:
+    slowAvg = WildersAverage(price, slowLength);
+case Hull:
+    slowAvg = HullMovingAvg(price, slowLength);
+}
+
+
+Plot fast_Avg = If DoPlots  then Fastavg else double.nan;
+fast_Avg.SetDefaultColor(Color.pink);
+fast_Avg.SetPaintingStrategy(PaintingStrategy.line);
+fast_Avg.SetLineWeight(1);
+Plot Slo_Avg = If DoPlots  then Slowavg else double.nan;
+Slo_Avg.SetDefaultColor(Color.cyan);
+Slo_Avg.SetPaintingStrategy(PaintingStrategy.line);
+Slo_Avg.SetLineWeight(1);
+# AddCloud(fastAvg, slowAvg, color.cyan, color.pink);
+#AddLabel(1, "Fast MA(" + fastLength + ")",color.pink);
+#AddLabel(1, "Slow MA(" + slowLength + ")",color.cyan);
+
+#Trigger alerts
+#alert(Fastavg, "CHECK IT OUT", Alert.Bar, Sound.Ding);
+

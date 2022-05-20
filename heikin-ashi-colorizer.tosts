@@ -15,12 +15,12 @@ AssignPriceColor(
   # POSITIVE
   if final == 2
     then CreateColor(0, 225, 0)
-  # (POSITIVE))
+  # (POSITIVE)
   else if final == 1
-    then CreateColor(100, 200, 150)
+    then CreateColor(150, 225, 150)
   # (NEGATIVE)
   else if final == -1
-    then CreateColor(200, 150, 100)
+    then CreateColor(200, 100, 100)
   # NEGATIVE
   else if final == -2
     then CreateColor(200, 0, 0)

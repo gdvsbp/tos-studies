@@ -1,0 +1,63 @@
+#
+# HighLowLookback
+#
+# Study to show the highest high and lowest low after a given number of bars back.
+#
+# Author: Kory Gill, @korygill
+#
+# VERSION HISTORY (sortable date and time (your local time is fine), and your initials
+# 20190710-2200-KG    - created
+# ...
+# ...
+#
+
+#
+# Common Variables that may also reduce calls to server
+#
+def vOpen = open;
+def vClose = close;
+def vLow = low;
+def vHigh = high;
+def nan = double.NaN;
+
+defineGlobalColor("highColor", Color.YELLOW);
+defineGlobalColor("lowColor", Color.DARK_ORANGE);
+
+
+def peaksV = if (vHigh[2] < vHigh[1] && vHigh[0] < vHigh[1]) then vHigh[1] else peaksV[1];
+def peaksV2 = if vClose > peaksV then double.NEGATIVE_INFINITY else peaksV;
+plot Peaks = peaksV2;
+Peaks.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Peaks.AssignValueColor(globalColor("highColor"));
+Peaks.SetLineWeight(5);
+Peaks.HideBubble();
+
+def peaksV3 = if peaksV2 == double.NEGATIVE_INFINITY && peaksV != double.NEGATIVE_INFINITY then peaksV else double.NEGATIVE_INFINITY;
+plot PeakBreaks = peaksV3;
+PeakBreaks.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+PeakBreaks.AssignValueColor(globalColor("highColor"));
+PeakBreaks.SetLineWeight(1);
+PeakBreaks.HideBubble();
+
+def valleysV = if vLow[2] > vLow[1] && vLow[0] > vLow[1] then vLow[1] else valleysV[1];
+def valleysV2 = if vClose < valleysV then double.POSITIVE_INFINITY else valleysV;
+plot Valleys = valleysV2;
+Valleys.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Valleys.AssignValueColor(globalColor("lowColor"));
+Valleys.SetLineWeight(5);
+Valleys.HideBubble();
+
+def valleysV3 = if valleysV2 == double.POSITIVE_INFINITY && valleysV != double.POSITIVE_INFINITY then valleysV else double.POSITIVE_INFINITY;
+plot ValleyBreaks = valleysV3;
+ValleyBreaks.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+ValleyBreaks.AssignValueColor(globalColor("lowColor"));
+ValleyBreaks.SetLineWeight(1);
+ValleyBreaks.HideBubble();
+
+def isFallthrough = valleysV3 != double.POSITIVE_INFINITY and valleysV3[1] == double.POSITIVE_INFINITY;
+Alert(isFallthrough, "Fall Through Low", Alert.BAR, Sound.Ding);
+
+def isBreakthrough = peaksV3 != double.NEGATIVE_INFINITY and peaksV3[1] == double.NEGATIVE_INFINITY;
+Alert(isBreakthrough, "Break Through High", Alert.BAR, Sound.Ding);
+
+AssignPriceColor(if vOpen > vClose then Color.GRAY else if vOpen < vClose then Color.WHITE else Color.LIGHT_GRAY);

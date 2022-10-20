@@ -1,0 +1,70 @@
+input ATR_Period = 2;
+input ATR_Multiplier = 2.5;
+input Inner_Pct = 0.1;
+input Outer_Pct = 0.2;
+
+def currAtr = ATR(ATR_Period, AverageType.SIMPLE);
+def start = close;
+def workingAtr = if (IsNaN(currAtr))
+  then 0
+  else currAtr * ATR_Multiplier;
+
+def atrUpperMax = start + workingAtr;
+def atrLowerMin = close - workingAtr;
+
+def _atrUpperFinal = if (IsNaN(_atrUpperFinal[1]))
+  then atrUpperMax
+  else if (Min(_atrUpperFinal[1], atrUpperMax) < start)
+    then atrUpperMax
+    else Min(_atrUpperFinal[1], atrUpperMax);
+
+plot AtrUpper = _atrUpperFinal;
+AtrUpper.SetPaintingStrategy(PaintingStrategy.LINE);
+AtrUpper.SetDefaultColor(Color.DARK_GRAY);
+AtrUpper.SetStyle(Curve.SHORT_DASH);
+AtrUpper.SetLineWeight(1);
+AtrUpper.HideBubble();
+
+plot AtrUpperChannelUp = AtrUpper[0] + (currAtr * Outer_Pct);
+AtrUpperChannelUp.SetPaintingStrategy(PaintingStrategy.LINE);
+AtrUpperChannelUp.SetDefaultColor(Color.RED);
+AtrUpperChannelUp.SetLineWeight(1);
+AtrUpperChannelUp.HideBubble();
+
+plot AtrUpperChannelDn = AtrUpper[0] - (currAtr * Inner_Pct);
+AtrUpperChannelDn.SetPaintingStrategy(PaintingStrategy.LINE);
+AtrUpperChannelDn.SetDefaultColor(Color.GREEN);
+AtrUpperChannelDn.SetLineWeight(1);
+AtrUpperChannelDn.HideBubble();
+
+def _atrLowerFinal = if (IsNaN(_atrLowerFinal[1]))
+  then atrLowerMin
+  else if (Max(_atrLowerFinal[1], atrLowerMin) > start)
+    then atrLowerMin
+    else Max(_atrLowerFinal[1], atrLowerMin);
+
+plot AtrLower = _atrLowerFinal;
+AtrLower.SetPaintingStrategy(PaintingStrategy.LINE);
+AtrLower.SetDefaultColor(Color.DARK_GRAY);
+AtrLower.SetStyle(Curve.SHORT_DASH);
+AtrLower.SetLineWeight(1);
+AtrLower.HideBubble();
+
+plot AtrLowerChannelUp = AtrLower[0] + (currAtr * Inner_Pct);
+AtrLowerChannelUp.SetPaintingStrategy(PaintingStrategy.LINE);
+AtrLowerChannelUp.SetDefaultColor(Color.GREEN);
+AtrLowerChannelUp.SetLineWeight(1);
+AtrLowerChannelUp.HideBubble();
+
+plot AtrLowerChannelDn = AtrLower[0] - (currAtr * Outer_Pct);
+AtrLowerChannelDn.SetPaintingStrategy(PaintingStrategy.LINE);
+AtrLowerChannelDn.SetDefaultColor(Color.RED);
+AtrLowerChannelDn.SetLineWeight(1);
+AtrLowerChannelDn.HideBubble();
+
+plot AtrMiddle = (AtrUpper + AtrLower) / 2;
+AtrMiddle.SetStyle(Curve.SHORT_DASH);
+AtrMiddle.SetPaintingStrategy(PaintingStrategy.LINE);
+AtrMiddle.SetDefaultColor(Color.DARK_GRAY);
+AtrMiddle.SetLineWeight(1);
+AtrMiddle.HideBubble();

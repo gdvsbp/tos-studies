@@ -2,7 +2,6 @@ def vOpen = open;
 def vClose = close;
 def vLow = low;
 def vHigh = high;
-def nan = double.NaN;
 
 defineGlobalColor("highColor", Color.YELLOW);
 defineGlobalColor("lowColor", Color.DARK_ORANGE);
@@ -11,20 +10,20 @@ def peaksV = if (
   (vHigh[3] < vHigh[2] && vHigh[1] < vHigh[2])
   or (vHigh[4] < vHigh[3] && vHigh[3] == vHigh[2] && vHigh[1] < vHigh[2])
   or (vHigh[5] < vHigh[4] && vHigh[4] == vHigh[2] && vHigh[3] == vHigh[2] && vHigh[1] < vHigh[2])
-) then vHigh[2] else nan;
+) then vHigh[2] else double.NaN;
 
 plot Peaks = peaksV[-2];
-Peaks.SetPaintingStrategy(PaintingStrategy.POINTS);
-Peaks.SetLineWeight(3);
-Peaks.SetDefaultColor(globalColor("highColor"));
+Peaks.setPaintingStrategy(PaintingStrategy.POINTS);
+Peaks.setLineWeight(3);
+Peaks.setDefaultColor(globalColor("highColor"));
 
 def valleysV = if (
   (vLow[3] > vLow[2] && vLow[1] > vLow[2])
   or (vLow[4] > vLow[3] && vLow[3] == vLow[2] && vLow[1] > vLow[2])
   or (vLow[5] > vLow[4] && vLow[4] == vLow[2] && vLow[3] == vLow[2] && vLow[1] > vLow[2])
-) then vLow[2] else nan;
+) then vLow[2] else double.NaN;
 
 plot Valleys = valleysV[-2];
-Valleys.SetPaintingStrategy(PaintingStrategy.POINTS);
-Valleys.SetLineWeight(3);
-Valleys.SetDefaultColor(globalColor("lowColor"));
+Valleys.setPaintingStrategy(PaintingStrategy.POINTS);
+Valleys.setLineWeight(3);
+Valleys.setDefaultColor(globalColor("lowColor"));

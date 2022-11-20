@@ -4,6 +4,9 @@ input mode = {default Price, Volume};
 input price = close;
 input MA_Average_Type = AverageType.SIMPLE;
 input MA_Length = 13;
+input plot_Slow = {default "No", "Yes"};
+input slow_MA_Average_Type = AverageType.SIMPLE;
+input slow_MA_Length = 26;
 input RSI_Length = 13;
 input over_Bought = 95;
 input over_Sold = 5;
@@ -13,16 +16,20 @@ input Regular_RSI_Average_Type = AverageType.WILDERS;
 def useOn = if mode == mode.Price then price else volume;
 
 def maOutput = MovingAverage(MA_Average_Type, useOn, MA_Length);
+def slowMaOutput = MovingAverage(slow_MA_Average_Type, useOn, slow_MA_Length);
 
 def NetChgAvg = MovingAverage(RSI_Average_Type, maOutput - maOutput[1], RSI_Length);
 def TotChgAvg = MovingAverage(RSI_Average_Type, AbsValue(maOutput - maOutput[1]), RSI_Length);
 def ChgRatio = if TotChgAvg != 0 then NetChgAvg / TotChgAvg else 0;
 def RSI = 50 * (ChgRatio + 1);
-
-plot OverSold = over_Sold;
-plot OverBought = over_Bought;
-
 plot MA_Of_RSI = RSI;
+
+def SlowNetChgAvg = MovingAverage(RSI_Average_Type, slowMaOutput - slowMaOutput[1], RSI_Length);
+def SlowTotChgAvg = MovingAverage(RSI_Average_Type, AbsValue(slowMaOutput - slowMaOutput[1]), RSI_Length);
+def SlowChgRatio = if SlowTotChgAvg != 0 then SlowNetChgAvg / SlowTotChgAvg else 0;
+def SlowRSI = 50 * (SlowChgRatio + 1);
+def SlowRSIOutput = if plot_Slow == plot_Slow."Yes" then SlowRSI else double.NaN;
+plot Slow_MA_Of_RSI = SlowRSIOutput;
 
 def RawNetChgAvg = MovingAverage(Regular_RSI_Average_Type, useOn - useOn[1], RSI_Length);
 def RawTotChgAvg = MovingAverage(Regular_RSI_Average_Type, AbsValue(useOn - useOn[1]), RSI_Length);
@@ -31,6 +38,5 @@ def RawRSI = 50 * (RawChgRatio + 1);
 
 plot Regular_RSI = RawRSI;
 
-if mode == mode.Volume then {
-  plot VolGraph = volume;
-}
+plot OverSold = over_Sold;
+plot OverBought = over_Bought;

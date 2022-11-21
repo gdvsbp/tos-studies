@@ -17,6 +17,9 @@ input Regular_RSI_Average_Type = AverageType.WILDERS;
 input over_Bought = 95;
 input over_Sold = 5;
 
+input over_Bought_Minor = 80;
+input over_Sold_Minor = 20;
+
 def volOffset = -100;
 
 script GetRSI {
@@ -46,8 +49,16 @@ Price_RSI.setDefaultColor(Color.GRAY);
 plot Price_Over_Bought = over_Bought;
 Price_Over_Bought.setDefaultColor(Color.DARK_GREEN);
 
+plot Price_Over_Bought_Minor = over_Bought_Minor;
+Price_Over_Bought_Minor.setDefaultColor(Color.DARK_GRAY);
+Price_Over_Bought_Minor.setStyle(Curve.SHORT_DASH);
+
 plot Price_Over_Sold = over_Sold;
 Price_Over_Sold.setDefaultColor(Color.DARK_RED);
+
+plot Price_Over_Sold_Minor = over_Sold_Minor;
+Price_Over_Sold_Minor.setDefaultColor(Color.DARK_GRAY);
+Price_Over_Sold_Minor.setStyle(Curve.SHORT_DASH);
 
 # calc RSI of Volume MA
 def volMaOutput = MovingAverage(Vol_MA_Average_Type, vol, Vol_MA_Length);

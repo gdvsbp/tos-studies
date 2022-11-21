@@ -34,17 +34,10 @@ script GetRSI {
   plot rsi = 50 * (ChgRatio + 1);
 }
 
+# ------- PRICE -------------------------------------
+
 # calc RSI of Price MA
 def priceMaOutput = MovingAverage(Price_MA_Average_Type, price, Price_MA_Length);
-
-# plot RSI of Price MA
-plot Price_MA_Of_RSI = GetRSI(RSI_Average_Type, priceMaOutput, priceMaOutput[1], Price_RSI_Length);
-Price_MA_Of_RSI.setLineWeight(2);
-Price_MA_Of_RSI.setDefaultColor(Color.ORANGE);
-
-# plot Price RSI
-plot Price_RSI = GetRSI(Regular_RSI_Average_Type, price, price[1], Price_RSI_Length);
-Price_RSI.setDefaultColor(Color.GRAY);
 
 plot Price_Over_Bought = over_Bought;
 Price_Over_Bought.setDefaultColor(Color.DARK_GREEN);
@@ -60,20 +53,31 @@ plot Price_Over_Sold_Minor = over_Sold_Minor;
 Price_Over_Sold_Minor.setDefaultColor(Color.DARK_GRAY);
 Price_Over_Sold_Minor.setStyle(Curve.SHORT_DASH);
 
+# plot Price RSI
+plot Price_RSI = GetRSI(Regular_RSI_Average_Type, price, price[1], Price_RSI_Length);
+Price_RSI.setDefaultColor(Color.GRAY);
+
+# plot RSI of Price MA
+plot Price_MA_Of_RSI = GetRSI(RSI_Average_Type, priceMaOutput, priceMaOutput[1], Price_RSI_Length);
+Price_MA_Of_RSI.setLineWeight(2);
+Price_MA_Of_RSI.setDefaultColor(Color.ORANGE);
+
+# ------- VOLUME -------------------------------------
+
 # calc RSI of Volume MA
 def volMaOutput = MovingAverage(Vol_MA_Average_Type, vol, Vol_MA_Length);
-
-# plot RSI of Vol MA
-plot Vol_MA_Of_RSI = GetRSI(RSI_Average_Type, volMaOutput, volMaOutput[1], Vol_RSI_Length) + volOffset;
-Vol_MA_Of_RSI.setLineWeight(2);
-Vol_MA_Of_RSI.setDefaultColor(Color.CYAN);
-
-# plot Vol RSI
-plot Vol_RSI = GetRSI(Regular_RSI_Average_Type, vol, vol[1], Vol_RSI_Length) + volOffset;
-Vol_RSI.setDefaultColor(Color.GRAY);
 
 plot Vol_Over_Bought = over_Bought + volOffset;
 Vol_Over_Bought.setDefaultColor(Color.DARK_GREEN);
 
 plot Vol_Over_Sold = over_Sold + volOffset;
 Vol_Over_Sold.setDefaultColor(Color.DARK_RED);
+
+# plot Vol RSI
+plot Vol_RSI = GetRSI(Regular_RSI_Average_Type, vol, vol[1], Vol_RSI_Length) + volOffset;
+Vol_RSI.setDefaultColor(Color.GRAY);
+
+# plot RSI of Vol MA
+plot Vol_MA_Of_RSI = GetRSI(RSI_Average_Type, volMaOutput, volMaOutput[1], Vol_RSI_Length) + volOffset;
+Vol_MA_Of_RSI.setLineWeight(2);
+Vol_MA_Of_RSI.setDefaultColor(Color.CYAN);

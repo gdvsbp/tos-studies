@@ -1,0 +1,35 @@
+declare LOWER;
+
+input St_Dev_Length = 5;
+input St_Dev_High = 2;
+input St_Dev_Low = 0.05;
+
+def vol = volume;
+def devLg = StDev(vol, St_Dev_Length) * St_Dev_High;
+def devSm = StDev(vol, St_Dev_Length) * St_Dev_Low;
+
+def runningVolNum = if IsNaN(runningVolNum[1]) or IsNaN(vol[1]) then (
+  0
+) else if (vol > vol[1] + devLg[1]) then (
+  5
+) else if (vol < vol[1] - devLg[1]) then (
+  0
+) else if (vol > vol[1] - devSm[1] && vol < vol[1] + devSm[1]) then (
+  runningVolNum[1]
+) else if vol > vol[1] then (
+  Min(runningVolNum[1] + 1, 5)
+) else if vol < vol[1] then (
+  Max(runningVolNum[1] - 1, 0)
+) else (
+  runningVolNum[1]
+);
+
+plot V = vol;
+V.AssignValueColor(
+  if runningVolNum == 0 then Color.GRAY
+  else if runningVolNum == 1 then Color.ORANGE
+  else if runningVolNum == 2 then Color.LIGHT_ORANGE
+  else if runningVolNum == 3 then Color.DARK_ORANGE
+  else if runningVolNum == 4 then Color.LIGHT_RED
+  else Color.RED
+);

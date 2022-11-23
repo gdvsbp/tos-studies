@@ -13,18 +13,42 @@ def peaksV = if (
   or (vHigh[5 + offset] < vHigh[4 + offset] && vHigh[4 + offset] == vHigh[2 + offset] && vHigh[3 + offset] == vHigh[2 + offset] && vHigh[1 + offset] < vHigh[2 + offset])
 ) then vHigh[2 + offset] else double.NaN;
 
-plot Peaks = peaksV[-2 - offset]; # adjust?
-Peaks.setPaintingStrategy(PaintingStrategy.POINTS);
-Peaks.setLineWeight(3);
-Peaks.setDefaultColor(globalColor("highColor"));
-
 def valleysV = if (
   (vLow[3 + offset] > vLow[2 + offset] && vLow[1 + offset] > vLow[2 + offset])
   or (vLow[4 + offset] > vLow[3 + offset] && vLow[3 + offset] == vLow[2 + offset] && vLow[1 + offset] > vLow[2 + offset])
   or (vLow[5 + offset] > vLow[4 + offset] && vLow[4 + offset] == vLow[2 + offset] && vLow[3 + offset] == vLow[2 + offset] && vLow[1 + offset] > vLow[2 + offset])
 ) then vLow[2 + offset] else double.NaN;
 
-plot Valleys = valleysV[-2 - offset]; # adjust?
+def peaksMajorV = if (
+  (vHigh[4 + offset] < vHigh[3 + offset] && vHigh[3 + offset] < vHigh[2 + offset] && vHigh[2 + offset] > vHigh[1 + offset])
+) then vHigh[2 + offset] else if (
+  (vHigh[4 + offset] < vHigh[3 + offset] && vHigh[3 + offset] > vHigh[2 + offset] && vHigh[2 + offset] > vHigh[1 + offset])
+  and (peaksMajorV[1] == double.NaN)
+) then vHigh[3 + offset] else double.NaN;
+
+def valleysMajorV = if (
+  (vLow[4 + offset] > vLow[3 + offset] && vLow[3 + offset] > vLow[2 + offset] && vLow[2 + offset] < vLow[1 + offset])
+) then vLow[2 + offset] else if (
+  (vLow[4 + offset] > vLow[3 + offset] && vLow[3 + offset] < vLow[2 + offset] && vLow[2 + offset] < vLow[1 + offset])
+  and (valleysMajorV[1] == double.NaN)
+) then vLow[3 + offset] else double.NaN;
+
+plot Peaks = peaksV[-2 - offset];
+Peaks.setPaintingStrategy(PaintingStrategy.POINTS);
+Peaks.setLineWeight(1);
+Peaks.setDefaultColor(globalColor("highColor"));
+
+plot PeaksMajor = peaksMajorV[-2 - offset];
+PeaksMajor.setPaintingStrategy(PaintingStrategy.POINTS);
+PeaksMajor.setLineWeight(5);
+PeaksMajor.setDefaultColor(globalColor("highColor"));
+
+plot Valleys = valleysV[-2 - offset];
 Valleys.setPaintingStrategy(PaintingStrategy.POINTS);
-Valleys.setLineWeight(3);
+Valleys.setLineWeight(1);
 Valleys.setDefaultColor(globalColor("lowColor"));
+
+plot ValleysMajor = valleysMajorV[-2 - offset];
+ValleysMajor.setPaintingStrategy(PaintingStrategy.POINTS);
+ValleysMajor.setLineWeight(5);
+ValleysMajor.setDefaultColor(globalColor("lowColor"));

@@ -33,6 +33,20 @@ def valleysMajorV = if (
   and (valleysMajorV[1] == double.NaN)
 ) then vLow[3 + offset] else double.NaN;
 
+def peaksColonelV = if (
+  (vHigh[6 + offset] < vHigh[5 + offset] && vHigh[5 + offset] < vHigh[4 + offset] && vHigh[4 + offset] < vHigh[3 + offset] && vHigh[3 + offset] > vHigh[2 + offset] && vHigh[2 + offset] > vHigh[1 + offset])
+) then vHigh[3 + offset] else if (
+  (vHigh[6 + offset] < vHigh[5 + offset] && vHigh[5 + offset] < vHigh[4 + offset] && vHigh[4 + offset] > vHigh[3 + offset] && vHigh[3 + offset] > vHigh[2 + offset] && vHigh[2 + offset] > vHigh[1 + offset])
+  and (peaksColonelV[1] == double.NaN)
+) then vHigh[4 + offset] else double.NaN;
+
+def valleysColonelV = if (
+  (vLow[6 + offset] > vLow[5 + offset] && vLow[5 + offset] > vLow[4 + offset] && vLow[4 + offset] > vLow[3 + offset] && vLow[3 + offset] < vLow[2 + offset] && vLow[2 + offset] < vLow[1 + offset])
+) then vLow[3 + offset] else if (
+  (vLow[6 + offset] > vLow[5 + offset] && vLow[5 + offset] > vLow[4 + offset] && vLow[4 + offset] < vLow[3 + offset] && vLow[3 + offset] < vLow[2 + offset] && vLow[2 + offset] < vLow[1 + offset])
+  and (valleysColonelV[1] == double.NaN)
+) then vLow[4 + offset] else double.NaN;
+
 plot Peaks = peaksV[-2 - offset];
 Peaks.setPaintingStrategy(PaintingStrategy.POINTS);
 Peaks.setLineWeight(1);
@@ -43,6 +57,11 @@ PeaksMajor.setPaintingStrategy(PaintingStrategy.POINTS);
 PeaksMajor.setLineWeight(5);
 PeaksMajor.setDefaultColor(globalColor("highColor"));
 
+plot PeaksColonel = peaksColonelV[-3 - offset];
+PeaksColonel.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+PeaksColonel.setLineWeight(1);
+PeaksColonel.setDefaultColor(globalColor("highColor"));
+
 plot Valleys = valleysV[-2 - offset];
 Valleys.setPaintingStrategy(PaintingStrategy.POINTS);
 Valleys.setLineWeight(1);
@@ -52,3 +71,8 @@ plot ValleysMajor = valleysMajorV[-2 - offset];
 ValleysMajor.setPaintingStrategy(PaintingStrategy.POINTS);
 ValleysMajor.setLineWeight(5);
 ValleysMajor.setDefaultColor(globalColor("lowColor"));
+
+plot ValleysColonel = valleysColonelV[-3 - offset];
+ValleysColonel.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+ValleysColonel.setLineWeight(1);
+ValleysColonel.setDefaultColor(globalColor("lowColor"));

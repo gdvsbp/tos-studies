@@ -1,0 +1,115 @@
+# Previous Intradays High, Low, Mean
+# Mobius
+# V01.12.2017 Desktop and Mobile
+# Revised original code that uses SecondsFromTime() and SecondsTillTime(). Code now uses RegularTradingStart() and RegularTradingEnd() to bracket RTH. Works in Mobile Apps
+
+def bar = barNumber();
+def h = high;
+def l = low;
+def c = close;
+def firstBar = if getTime() crosses above RegularTradingStart(GetYYYYMMDD()) and
+                  !isNaN(close)
+               then bar
+               else double.nan;
+def lastBar = if getTime() crosses above RegularTradingEnd(GetYYYYMMDD()) and
+                 !isNaN(close)
+              then bar
+              else double.nan;
+addVerticalLine(bar == HighestAll(firstBar), "first bar", color.cyan, curve.short_dash);
+addVerticalLine(bar == HighestAll(lastBar), "last bar", color.cyan, curve.short_dash);
+def bar_t1 = if !isNaN(firstBar)
+            then bar
+            else bar_t1[1];
+def bar_t2 = if !isNaN(lastBar)
+             then bar
+             else bar_t2[1];
+def prevFirstBar = if bar_t1 != bar_t1[1]
+              then bar_t1[1]
+              else prevFirstBar[1];
+def prevLastBar = if bar_t2 != bar_t2[1]
+                  then bar_t2[1]
+                  else prevLastBar[1];
+addVerticalLine(bar == HighestAll(prevFirstBar), "prev first bar", color.red, curve.short_dash);
+addVerticalLine(bar == HighestAll(prevLastBar), "prev Last bar", color.red, curve.short_dash);
+
+def hhPm = if bar == HighestAll(lastBar)
+         then h
+         else if between(bar, highestAll(lastBar), highestAll(firstBar)) and
+                 h > hhPm[1]
+              then h
+              else hhPm[1];
+def hhBarPm = if h == hhPm and between(bar, highestAll(lastBar), highestAll(firstBar))
+            then barNumber()
+            else double.nan;
+def llPm = if bar == HighestAll(prevFirstBar)
+         then l
+         else if between(bar, highestAll(lastBar), highestAll(firstBar)) and
+                 l < llPm[1]
+              then l
+              else llPm[1];
+def llBarPm = if l == llPm and between(bar, highestAll(lastBar), highestAll(firstBar))
+            then bar
+            else double.nan;
+
+
+
+def hh = if bar == HighestAll(prevFirstBar)
+         then h
+         else if between(bar, highestAll(prevFirstBar), highestAll(LastBar)) and
+                 h > hh[1]
+              then h
+              else hh[1];
+def hhBar = if h == hh and between(bar, highestAll(prevFirstBar), highestAll(LastBar))
+            then barNumber()
+            else double.nan;
+def ll = if bar == HighestAll(prevFirstBar)
+         then l
+         else if between(bar, highestAll(prevFirstBar), highestAll(LastBar)) and
+                 l < ll[1]
+              then l
+              else ll[1];
+def llBar = if l == ll and between(bar, highestAll(prevFirstBar), highestAll(LastBar))
+            then bar
+            else double.nan;
+
+plot PmHigh = if bar >= highestAll(hhBarPm)
+                   then highestAll(if isNaN(c[-1])
+                                   then hhPm
+                                   else double.nan)
+                   else double.nan;
+     PmHigh.SetStyle(Curve.Long_Dash);
+     PmHigh.SetLineWeight(3);
+     PmHigh.SetDefaultColor(Color.Cyan);
+     PmHigh.HideTitle();
+
+plot PmLow = if bar >= HighestAll(llBarPm)
+                  then highestAll(if isNaN(c[-1])
+                                  then llPm
+                                  else double.nan)
+                  else double.nan;
+     PmLow.SetStyle(Curve.Long_Dash);
+     PmLow.SetLineWeight(3);
+     PmLow.SetDefaultColor(Color.Violet);
+     PmLow.HideTitle();
+
+plot PrevDayHigh = if bar >= highestAll(hhBar)
+                   then highestAll(if isNaN(c[-1])
+                                   then hh
+                                   else double.nan)
+                   else double.nan;
+     PrevDayHigh.SetStyle(Curve.Long_Dash);
+     PrevDayHigh.SetLineWeight(3);
+     PrevDayHigh.SetDefaultColor(Color.Yellow);
+     PrevDayHigh.HideTitle();
+plot PrevDayLow = if bar >= HighestAll(llBar)
+                  then highestAll(if isNaN(c[-1])
+                                  then ll
+                                  else double.nan)
+                  else double.nan;
+     PrevDayLow.SetStyle(Curve.Long_Dash);
+     PrevDayLow.SetLineWeight(3);
+     PrevDayLow.SetDefaultColor(Color.Orange);
+     PrevDayLow.HideTitle();
+
+
+# End Code Previous Days High, Low, Mean

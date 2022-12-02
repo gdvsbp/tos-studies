@@ -33,3 +33,14 @@ V.AssignValueColor(
   else if runningVolNum == 4 then Color.LIGHT_RED
   else Color.RED
 );
+
+
+def isRollover = GetYYYYMMDD() != GetYYYYMMDD()[1];
+
+def beforeStart = GetTime() < RegularTradingStart(GetYYYYMMDD());
+
+def pmVol = if isRollover and beforeStart then vol else if beforeStart then pmVol[1] + volume else Double.NaN;
+
+plot PreMarketVolume = pmVol;
+PreMarketVolume.SetPaintingStrategy(PaintingStrategy.SQUARED_HISTOGRAM);
+PreMarketVolume.SetDefaultColor(Color.CYAN);

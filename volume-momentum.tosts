@@ -25,6 +25,8 @@ def runningVolNum = if IsNaN(runningVolNum[1]) or IsNaN(vol[1]) then (
 );
 
 plot V = vol;
+V.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
+PreMarketVolume.SetDefaultColor(Color.GRAY);
 V.AssignValueColor(
   if runningVolNum == 0 then Color.GRAY
   else if runningVolNum == 1 then Color.ORANGE

@@ -1,0 +1,40 @@
+declare LOWER;
+
+input length = 14;
+input length_K = 3;
+input length_D = 3;
+
+script GetOBV {
+  def data = TotalSum(if (close - close[1] > 0) then volume else if (close - close[1] < 0) then -volume else volume * 0);
+  plot MyLine = data;
+}
+
+script GetStoch {
+  input thing = 0;
+  input length = 1;
+  plot MyLine = 100 * (thing - Lowest(thing, length)) / (Highest(thing, length) - Lowest(thing, length));
+}
+
+plot Hi = 80;
+Hi.setDefaultColor(Color.DARK_GRAY);
+
+plot Lo = 20;
+Lo.setDefaultColor(Color.DARK_GRAY);
+
+def os = GetOBV();
+
+def stoch_obv = GetStoch(os, length);
+def k = MovingAverage(AverageType.SIMPLE, stoch_obv, length_k);
+def d = MovingAverage(AverageType.SIMPLE, k, length_d);
+
+plot K_Line = k;
+K_Line.setDefaultColor(Color.RED);
+
+plot D_Line = d;
+D_Line.setDefaultColor(Color.CYAN);
+
+def isBuy = K_Line > D_Line and K_Line[1] < D_Line[1];
+def isSell = K_Line < D_Line and K_Line[1] > D_Line[1];
+
+AddVerticalLine ( isBuy, "buy", Color.UPTICK);
+AddVerticalLine ( isSell, "sell", Color.DOWNTICK);

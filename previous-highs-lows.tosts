@@ -1,4 +1,4 @@
-input todayHighLowDelay = 20;
+input todayHighLowDelay = 30;
 
 def bar = barNumber();
 def h = high;
@@ -129,10 +129,6 @@ def hhToday = if bar == HighestAll(firstBar)
               then h
               else hhToday[1];
 
-def hhBarToday = if h == hhToday and bar >= highestAll(firstBar)
-            then bar
-            else double.nan;
-
 def llToday = if bar == HighestAll(firstBar)
          then l
          else if bar > highestAll(firstBar) and
@@ -140,24 +136,17 @@ def llToday = if bar == HighestAll(firstBar)
               then l
               else llToday[1];
 
-def llBarToday = if l == llToday and bar >= highestAll(firstBar)
-            then bar
-            else double.nan;
-
 plot TodayHigh = if bar >= highestAll(todayHighLowThreshold) and HighestAll(todayHighLowThreshold) >= HighestAll(firstBar)
-                   then highestAll(if isNaN(c[-1])
-                                   then hhToday
-                                   else double.nan)
+                   then hhToday
                    else double.nan;
      TodayHigh.SetStyle(Curve.Long_Dash);
      TodayHigh.SetLineWeight(3);
      TodayHigh.SetDefaultColor(Color.Green);
      TodayHigh.HideTitle();
+
 plot TodayLow = if bar >= HighestAll(todayHighLowThreshold) and HighestAll(todayHighLowThreshold) >= HighestAll(firstBar)
-                  then highestAll(if isNaN(c[-1])
-                                  then llToday
-                                  else double.nan)
-                  else double.nan;
+                  then llToday
+                   else double.nan;
      TodayLow.SetStyle(Curve.Long_Dash);
      TodayLow.SetLineWeight(3);
      TodayLow.SetDefaultColor(Color.DARK_GREEN);

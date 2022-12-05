@@ -1,7 +1,4 @@
-# Previous Intradays High, Low, Mean
-# Mobius
-# V01.12.2017 Desktop and Mobile
-# Revised original code that uses SecondsFromTime() and SecondsTillTime(). Code now uses RegularTradingStart() and RegularTradingEnd() to bracket RTH. Works in Mobile Apps
+input todayHighLowDelay = 20;
 
 def bar = barNumber();
 def h = high;
@@ -15,8 +12,15 @@ def lastBar = if getTime() crosses above RegularTradingEnd(GetYYYYMMDD()) and
                  !isNaN(close)
               then bar
               else double.nan;
+def todayHighLowThreshold = if getTime() crosses above RegularTradingStart(GetYYYYMMDD()) + (todayHighLowDelay * 60 * 1000) and
+                  !isNaN(close)
+               then bar
+               else double.nan;
+
 addVerticalLine(bar == HighestAll(firstBar), "first bar", color.cyan, curve.short_dash);
 addVerticalLine(bar == HighestAll(lastBar), "last bar", color.cyan, curve.short_dash);
+addVerticalLine(bar == HighestAll(todayHighLowThreshold), "threshold bar", color.magenta, curve.short_dash);
+
 def bar_t1 = if !isNaN(firstBar)
             then bar
             else bar_t1[1];
@@ -32,43 +36,26 @@ def prevLastBar = if bar_t2 != bar_t2[1]
 addVerticalLine(bar == HighestAll(prevFirstBar), "prev first bar", color.red, curve.short_dash);
 addVerticalLine(bar == HighestAll(prevLastBar), "prev Last bar", color.red, curve.short_dash);
 
+# Premarket high/low
 def hhPm = if bar == HighestAll(lastBar)
          then h
-         else if between(bar, highestAll(lastBar), highestAll(firstBar)) and
+         else if between(bar, highestAll(lastBar), highestAll(firstBar) - 1) and
                  h > hhPm[1]
               then h
               else hhPm[1];
-def hhBarPm = if h == hhPm and between(bar, highestAll(lastBar), highestAll(firstBar))
-            then barNumber()
-            else double.nan;
-def llPm = if bar == HighestAll(prevFirstBar)
-         then l
-         else if between(bar, highestAll(lastBar), highestAll(firstBar)) and
-                 l < llPm[1]
-              then l
-              else llPm[1];
-def llBarPm = if l == llPm and between(bar, highestAll(lastBar), highestAll(firstBar))
+
+def hhBarPm = if h == hhPm and between(bar, highestAll(lastBar), highestAll(firstBar) - 1)
             then bar
             else double.nan;
 
-
-
-def hh = if bar == HighestAll(prevFirstBar)
-         then h
-         else if between(bar, highestAll(prevFirstBar), highestAll(LastBar)) and
-                 h > hh[1]
-              then h
-              else hh[1];
-def hhBar = if h == hh and between(bar, highestAll(prevFirstBar), highestAll(LastBar))
-            then barNumber()
-            else double.nan;
-def ll = if bar == HighestAll(prevFirstBar)
+def llPm = if bar == HighestAll(lastBar)
          then l
-         else if between(bar, highestAll(prevFirstBar), highestAll(LastBar)) and
-                 l < ll[1]
+         else if between(bar, highestAll(lastBar), highestAll(firstBar) - 1) and
+                 l < llPm[1]
               then l
-              else ll[1];
-def llBar = if l == ll and between(bar, highestAll(prevFirstBar), highestAll(LastBar))
+              else llPm[1];
+
+def llBarPm = if l == llPm and between(bar, highestAll(lastBar), highestAll(firstBar) - 1)
             then bar
             else double.nan;
 
@@ -92,6 +79,29 @@ plot PmLow = if bar >= HighestAll(llBarPm)
      PmLow.SetDefaultColor(Color.Violet);
      PmLow.HideTitle();
 
+# Prior day high/low
+def hh = if bar == HighestAll(prevFirstBar)
+         then h
+         else if between(bar, highestAll(prevFirstBar), highestAll(LastBar) - 1) and
+                 h > hh[1]
+              then h
+              else hh[1];
+
+def hhBar = if h == hh and between(bar, highestAll(prevFirstBar), highestAll(LastBar) - 1)
+            then bar
+            else double.nan;
+
+def ll = if bar == HighestAll(prevFirstBar)
+         then l
+         else if between(bar, highestAll(prevFirstBar), highestAll(LastBar) - 1) and
+                 l < ll[1]
+              then l
+              else ll[1];
+
+def llBar = if l == ll and between(bar, highestAll(prevFirstBar), highestAll(LastBar) - 1)
+            then bar
+            else double.nan;
+
 plot PrevDayHigh = if bar >= highestAll(hhBar)
                    then highestAll(if isNaN(c[-1])
                                    then hh
@@ -111,5 +121,46 @@ plot PrevDayLow = if bar >= HighestAll(llBar)
      PrevDayLow.SetDefaultColor(Color.Orange);
      PrevDayLow.HideTitle();
 
+# Current day high/low
+def hhToday = if bar == HighestAll(firstBar)
+         then h
+         else if bar > highestAll(firstBar) and
+                 h > hhToday[1]
+              then h
+              else hhToday[1];
+
+def hhBarToday = if h == hhToday and bar >= highestAll(firstBar)
+            then bar
+            else double.nan;
+
+def llToday = if bar == HighestAll(firstBar)
+         then l
+         else if bar > highestAll(firstBar) and
+                 l < llToday[1]
+              then l
+              else llToday[1];
+
+def llBarToday = if l == llToday and bar >= highestAll(firstBar)
+            then bar
+            else double.nan;
+
+plot TodayHigh = if bar >= highestAll(todayHighLowThreshold) and HighestAll(todayHighLowThreshold) >= HighestAll(firstBar)
+                   then highestAll(if isNaN(c[-1])
+                                   then hhToday
+                                   else double.nan)
+                   else double.nan;
+     TodayHigh.SetStyle(Curve.Long_Dash);
+     TodayHigh.SetLineWeight(3);
+     TodayHigh.SetDefaultColor(Color.Green);
+     TodayHigh.HideTitle();
+plot TodayLow = if bar >= HighestAll(todayHighLowThreshold) and HighestAll(todayHighLowThreshold) >= HighestAll(firstBar)
+                  then highestAll(if isNaN(c[-1])
+                                  then llToday
+                                  else double.nan)
+                  else double.nan;
+     TodayLow.SetStyle(Curve.Long_Dash);
+     TodayLow.SetLineWeight(3);
+     TodayLow.SetDefaultColor(Color.DARK_GREEN);
+     TodayLow.HideTitle();
 
 # End Code Previous Days High, Low, Mean

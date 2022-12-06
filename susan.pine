@@ -1,6 +1,9 @@
 // @version=5
 indicator("Susan", "", overlay = true)
 
+// general settings
+var offset = -1
+
 var previousPeak = high
 var previousPeakTime = time
 var currentPeak = high
@@ -26,3 +29,37 @@ plot(peaksV, title='Peaks', color=color.new(color.yellow, 0), linewidth=3, style
 if (currentPeak < previousPeak)
     line.delete(peakLine)
     peakLine := line.new(x1 = previousPeakTime, y1 = previousPeak, x2 = currentPeakTime, y2 = currentPeak, xloc = xloc.bar_time, extend = extend.right)
+    line.set_color(id = peakLine, color = color.yellow)
+else
+    line.delete(peakLine)
+
+// VALLEYS
+
+var previousValley = low
+var previousValleyTime = time
+var currentValley = low
+var currentValleyTime = time
+var valleyLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+
+valleyV = low
+
+if (low[2] > low[1] and low[0] > low[1])
+    valleyV := low[1]
+
+    // track the previous and current valley
+    previousValley := currentValley
+    previousValleyTime := currentValleyTime
+    currentValley := low[1]
+    currentValleyTime := time[1]
+else
+    valleyV := na
+
+plot(valleyV, title='Valley', color=color.new(color.orange, 0), linewidth=3, style=plot.style_circles, offset = -1)
+
+// example of when a peak is lower than the previous valley we delete any old lines and draw a new line connecting them
+if (currentValley > previousValley)
+    line.delete(valleyLine)
+    valleyLine := line.new(x1 = previousValleyTime, y1 = previousValley, x2 = currentValleyTime, y2 = currentValley, xloc = xloc.bar_time, extend = extend.right)
+    line.set_color(id = valleyLine, color = color.orange)
+else
+    line.delete(valleyLine)

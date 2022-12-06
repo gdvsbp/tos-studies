@@ -1,0 +1,28 @@
+// @version=5
+indicator("Susan", "", overlay = true)
+
+var previousPeak = high
+var previousPeakTime = time
+var currentPeak = high
+var currentPeakTime = time
+var peakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+
+peaksV = high
+
+if ((high[2] < high[1] and high[0] < high[1]) or (high[3] < high[2] and high[2] == high[1] and high[0] < high[1]) or (high[4] < high[3] and high[3] == high[1] and high[2] == high[1] and high[0] < high[1]))
+    peaksV := high[1]
+
+    // track the previous and current peak
+    previousPeak := currentPeak
+    previousPeakTime := currentPeakTime
+    currentPeak := high[1]
+    currentPeakTime := time[1]
+else
+    peaksV := na
+
+plot(peaksV, title='Peaks', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_circles, offset = -1)
+
+// example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
+if (currentPeak < previousPeak)
+    line.delete(peakLine)
+    peakLine := line.new(x1 = previousPeakTime, y1 = previousPeak, x2 = currentPeakTime, y2 = currentPeak, xloc = xloc.bar_time, extend = extend.right)

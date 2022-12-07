@@ -10,18 +10,21 @@ var currentPeak = high
 var currentPeakTime = time
 var peakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
-peaksV = high
+calcPeaks(high) =>
+    if ((high[2] < high[1] and high[0] < high[1]) or (high[3] < high[2] and high[2] == high[1] and high[0] < high[1]) or (high[4] < high[3] and high[3] == high[1] and high[2] == high[1] and high[0] < high[1]))
+        high[1]
+    else
+        na
 
-if ((high[2] < high[1] and high[0] < high[1]) or (high[3] < high[2] and high[2] == high[1] and high[0] < high[1]) or (high[4] < high[3] and high[3] == high[1] and high[2] == high[1] and high[0] < high[1]))
+peaksV = calcPeaks(high)
+
+if (peaksV)
     peaksV := high[1]
-
     // track the previous and current peak
     previousPeak := currentPeak
     previousPeakTime := currentPeakTime
     currentPeak := high[1]
     currentPeakTime := time[1]
-else
-    peaksV := na
 
 plot(peaksV, title='Peaks', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_circles, offset = -1)
 
@@ -41,25 +44,64 @@ var currentValley = low
 var currentValleyTime = time
 var valleyLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
-valleyV = low
+calcValley(low) =>
+    if (low[2] > low[1] and low[0] > low[1])
+        low[1]
+    else
+        na
 
-if (low[2] > low[1] and low[0] > low[1])
+valleyV = calcValley(low)
+
+if (valleyV)
     valleyV := low[1]
-
     // track the previous and current valley
     previousValley := currentValley
     previousValleyTime := currentValleyTime
     currentValley := low[1]
     currentValleyTime := time[1]
-else
-    valleyV := na
+
 
 plot(valleyV, title='Valley', color=color.new(color.orange, 0), linewidth=3, style=plot.style_circles, offset = -1)
 
-// example of when a peak is lower than the previous valley we delete any old lines and draw a new line connecting them
+// example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
 if (currentValley > previousValley)
     line.delete(valleyLine)
     valleyLine := line.new(x1 = previousValleyTime, y1 = previousValley, x2 = currentValleyTime, y2 = currentValley, xloc = xloc.bar_time, extend = extend.right)
     line.set_color(id = valleyLine, color = color.orange)
 else
     line.delete(valleyLine)
+
+
+// DAILY VALLEY
+// To avoid differences on historical and realtime bars, you can use this technique, which only returns a value from the higher timeframe on the bar after it completes:
+indexHighTF = barstate.isrealtime ? 1 : 0
+indexCurrTF = barstate.isrealtime ? 0 : 1
+
+var float previousDailyValley = na
+var int previousDailyValleyTime = na
+var float currentDailyValley = na
+var int currentDailyValleyTime = na
+var dailyValleyLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+
+[peaks1D, valley1D, time1D] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low[indexHighTF]), time[indexHighTF]])
+
+// if barstate.islastconfirmedhistory
+//     label.new(bar_index, high, "OHLC values: " + str.tostring(valley1D))
+
+if (valley1D)
+    previousDailyValley := currentDailyValley
+    previousDailyValleyTime := previousDailyValleyTime
+    currentDailyValley := valley1D[1]
+    currentDailyValleyTime := time1D[1]
+
+// plot(previousDaily, title='Prev Daily')
+// plot(currentDaily, title='Current Daily')
+
+plot(valley1D, title='Valley Daily', color=color.new(color.blue, 0), linewidth=3, style=plot.style_circles, offset = -1)
+
+// if (currentDailyValley > previousDailyValley)
+//     line.delete(dailyValleyLine)
+//     dailyValleyLine := line.new(x1 = previousDailyValleyTime, y1 = previousDailyValley, x2 = currentDailyValleyTime, y2 = currentDailyValley, xloc = xloc.bar_time, extend = extend.right)
+//     line.set_color(id = dailyValleyLine, color = color.orange)
+// else
+//     line.delete(dailyValleyLine)

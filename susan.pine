@@ -72,36 +72,35 @@ else
     line.delete(valleyLine)
 
 
-// DAILY VALLEY
+// DAILY PEAKS
 // To avoid differences on historical and realtime bars, you can use this technique, which only returns a value from the higher timeframe on the bar after it completes:
 indexHighTF = barstate.isrealtime ? 1 : 0
 indexCurrTF = barstate.isrealtime ? 0 : 1
 
-var float previousDailyValley = na
-var int previousDailyValleyTime = na
-var float currentDailyValley = na
-var int currentDailyValleyTime = na
-var dailyValleyLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+var float previousDailyPeak = na
+var int previousDailyPeakTime = na
+var float currentDailyPeak = na
+var int currentDailyPeakTime = na
+var dailyPeakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
-[peaks1D, valley1D, time1D] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low[indexHighTF]), time[indexHighTF]])
+[peaks1D, valley1D, time1D] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low[indexHighTF]), time[indexHighTF]], barmerge.gaps_on)
 
 // if barstate.islastconfirmedhistory
 //     label.new(bar_index, high, "OHLC values: " + str.tostring(valley1D))
 
-if (valley1D)
-    previousDailyValley := currentDailyValley
-    previousDailyValleyTime := previousDailyValleyTime
-    currentDailyValley := valley1D[1]
-    currentDailyValleyTime := time1D[1]
+if (peaks1D)
+    previousDailyPeak := currentDailyPeak
+    previousDailyPeakTime := previousDailyPeakTime
+    currentDailyPeak := peaks1D
+    currentDailyPeakTime := time1D
 
-// plot(previousDaily, title='Prev Daily')
-// plot(currentDaily, title='Current Daily')
+// TODO: I think the offset here needs to be -x amount of time that makes up 1 day.. like a multiplier
+// Ex: 4hr would be -2... 1hr would be -8..
+plot(peaks1D, title='Valley Daily', color=color.new(color.blue, 0), linewidth=3, style=plot.style_circles, offset = -8)
 
-plot(valley1D, title='Valley Daily', color=color.new(color.blue, 0), linewidth=3, style=plot.style_circles, offset = -1)
-
-// if (currentDailyValley > previousDailyValley)
-//     line.delete(dailyValleyLine)
-//     dailyValleyLine := line.new(x1 = previousDailyValleyTime, y1 = previousDailyValley, x2 = currentDailyValleyTime, y2 = currentDailyValley, xloc = xloc.bar_time, extend = extend.right)
-//     line.set_color(id = dailyValleyLine, color = color.orange)
-// else
-//     line.delete(dailyValleyLine)
+if (previousDailyPeak > currentDailyPeak)
+    line.delete(dailyPeakLine)
+    dailyPeakLine := line.new(x1 = previousDailyPeakTime, y1 = previousDailyPeak, x2 = currentDailyPeakTime, y2 = currentDailyPeak, xloc = xloc.bar_time, extend = extend.right)
+    line.set_color(id = dailyPeakLine, color = color.blue)
+else
+    line.delete(dailyPeakLine)

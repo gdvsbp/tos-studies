@@ -96,7 +96,7 @@ if (peaks1D)
 
 // TODO: I think the offset here needs to be -x amount of time that makes up 1 day.. like a multiplier
 // Ex: 4hr would be -2... 1hr would be -8..
-plot(peaks1D, title='Valley Daily', color=color.new(color.blue, 0), linewidth=3, style=plot.style_circles, offset = -8)
+plot(peaks1D, title='Valley Daily', color=color.new(color.blue, 0), linewidth=3, style=plot.style_circles, offset = 0)
 
 if (previousDailyPeak > currentDailyPeak)
     line.delete(dailyPeakLine)
@@ -104,3 +104,86 @@ if (previousDailyPeak > currentDailyPeak)
     line.set_color(id = dailyPeakLine, color = color.blue)
 else
     line.delete(dailyPeakLine)
+
+// ********************************** //
+// ********** HIGH AND LOW ********** //
+// ********************************** //
+// Daily high and low
+dailyhigh = request.security(syminfo.tickerid, 'D', high)
+dailylow = request.security(syminfo.tickerid, 'D', low)
+
+// Yesterday's Close
+previousdayclose = request.security(syminfo.tickerid, 'D', close[1])
+
+// Today's open
+dayopen = request.security(syminfo.tickerid, 'D', open)
+
+// Yesterday high and low
+previousdayhigh = request.security(syminfo.tickerid, 'D', high[1])
+previousdaylow = request.security(syminfo.tickerid, 'D', low[1])
+
+// Premarket high and low
+t = time("1440","0400-0930")
+is_first = na(t[1]) and not na(t) or t[1] < t
+ending_hour = 9
+ending_minute = 30
+
+pm_high = float(na)
+pm_low = float(na)
+k = int(na)
+
+if is_first and barstate.isnew and (hour < ending_hour or hour >= 16 or hour == ending_hour and minute < ending_minute)
+    pm_high := high
+    pm_low := low
+    pm_low
+else
+    pm_high := pm_high[1]
+    pm_low := pm_low[1]
+    pm_low
+
+if high > pm_high and (hour < ending_hour or hour >= 1600 or hour == ending_hour and minute < ending_minute)
+    pm_high := high
+    pm_high
+
+if low < pm_low and (hour < ending_hour or hour >= 1600 or hour == ending_hour and minute < ending_minute)
+    pm_low := low
+    pm_low
+
+LastOnly = true
+
+if LastOnly == true
+    k := -9999
+    k
+else
+    k := 0
+    k
+
+td = time - time[5]
+
+// Daily high and low lines
+plot(dailyhigh, style=plot.style_line, title='Daily high', color=color.new(#ffffff, 0), linewidth=1, trackprice=true, offset=k)
+dh = label.new(x=time + td, y=dailyhigh, text='Day High', xloc=xloc.bar_time, style=label.style_none, textcolor=#ffffff, size=size.normal, textalign=text.align_center)
+label.delete(dh[1])
+
+plot(dailylow, style=plot.style_line, title='Daily low', color=color.new(#9c27b0, 0), linewidth=1, trackprice=true, offset=k)
+dl = label.new(x=time + td, y=dailylow, text='Day Low', xloc=xloc.bar_time, style=label.style_none, textcolor=#9c27b0, size=size.normal, textalign=text.align_center)
+label.delete(dl[1])
+
+// Previous day high and low lines
+plot(previousdayhigh, style=plot.style_line, title='Yesterday\'s high', color=color.new(#fffb00, 0), linewidth=1, trackprice=true, offset=k)
+pdh = label.new(x=time + td, y=previousdayhigh, text='Previous High', xloc=xloc.bar_time, style=label.style_none, textcolor=#fbff00, size=size.normal, textalign=text.align_center)
+label.delete(pdh[1])
+
+plot(previousdaylow, style=plot.style_line, title='Yesterday\'s low', color=color.new(#ff90e7, 0), linewidth=1, trackprice=true, offset=k)
+pdl = label.new(x=time + td, y=previousdaylow, text='Previous Low', xloc=xloc.bar_time, style=label.style_none, textcolor=#ff90e7, size=size.normal, textalign=text.align_center)
+label.delete(pdl[1])
+
+// Premarket high and low lines
+plot(pm_high, style=plot.style_line, title='Premarket high', trackprice=true, color=color.new(#5eff00, 0), linewidth=1, offset=k)
+pmh = label.new(x=time + td, y=pm_high, text='PM High', xloc=xloc.bar_time, style=label.style_none, textcolor=#5eff00, size=size.normal, textalign=text.align_center)
+label.delete(pmh[1])
+
+plot(pm_low, style=plot.style_line, title='Premarket low', trackprice=true, color=color.new(#ff0000, 0), linewidth=1, offset=k)
+pml = label.new(x=time + td, y=pm_low, text='PM Low', xloc=xloc.bar_time, style=label.style_none, textcolor=#ff0000, size=size.normal, textalign=text.align_center)
+label.delete(pml[1])
+// ********************************** //

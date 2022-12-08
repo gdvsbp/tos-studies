@@ -51,28 +51,40 @@ plot Peaks = peaksV[-2 - offset];
 Peaks.setPaintingStrategy(PaintingStrategy.POINTS);
 Peaks.setLineWeight(1);
 Peaks.setDefaultColor(globalColor("highColor"));
+Peaks.HideBubble();
+Peaks.HideTitle();
 
 plot PeaksMajor = peaksMajorV[-2 - offset];
 PeaksMajor.setPaintingStrategy(PaintingStrategy.POINTS);
 PeaksMajor.setLineWeight(5);
 PeaksMajor.setDefaultColor(globalColor("highColor"));
+PeaksMajor.HideBubble();
+PeaksMajor.HideTitle();
 
 plot PeaksColonel = peaksColonelV[-3 - offset];
 PeaksColonel.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
 PeaksColonel.setLineWeight(1);
 PeaksColonel.setDefaultColor(globalColor("highColor"));
+PeaksColonel.HideBubble();
+PeaksColonel.HideTitle();
 
 plot Valleys = valleysV[-2 - offset];
 Valleys.setPaintingStrategy(PaintingStrategy.POINTS);
 Valleys.setLineWeight(1);
 Valleys.setDefaultColor(globalColor("lowColor"));
+Valleys.HideBubble();
+Valleys.HideTitle();
 
 plot ValleysMajor = valleysMajorV[-2 - offset];
 ValleysMajor.setPaintingStrategy(PaintingStrategy.POINTS);
 ValleysMajor.setLineWeight(5);
 ValleysMajor.setDefaultColor(globalColor("lowColor"));
+ValleysMajor.HideBubble();
+ValleysMajor.HideTitle();
 
 plot ValleysColonel = valleysColonelV[-3 - offset];
 ValleysColonel.setPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
 ValleysColonel.setLineWeight(1);
 ValleysColonel.setDefaultColor(globalColor("lowColor"));
+ValleysColonel.HideBubble();
+ValleysColonel.HideTitle();

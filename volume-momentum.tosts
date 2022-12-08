@@ -26,7 +26,7 @@ def runningVolNum = if IsNaN(runningVolNum[1]) or IsNaN(vol[1]) then (
 
 plot V = vol;
 V.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
-PreMarketVolume.SetDefaultColor(Color.GRAY);
+V.SetDefaultColor(Color.GRAY);
 V.AssignValueColor(
   if runningVolNum == 0 then Color.GRAY
   else if runningVolNum == 1 then Color.ORANGE
@@ -46,3 +46,24 @@ def pmVol = if isRollover and beforeStart then vol else if beforeStart then pmVo
 plot PreMarketVolume = pmVol;
 PreMarketVolume.SetPaintingStrategy(PaintingStrategy.SQUARED_HISTOGRAM);
 PreMarketVolume.SetDefaultColor(Color.CYAN);
+
+plot Down = if close < open then 0 else double.NaN;
+Down.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Down.SetDefaultColor(Color.DOWNTICK);
+Down.SetLineWeight(3);
+Down.HideBubble();
+Down.HideTitle();
+
+plot Up = if close > open then 0 else double.NaN;
+Up.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Up.SetDefaultColor(Color.UPTICK);
+Up.SetLineWeight(3);
+Up.HideBubble();
+Up.HideTitle();
+
+plot Neutral = if close == open then 0 else double.NaN;
+Neutral.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Neutral.SetDefaultColor(Color.GRAY);
+Neutral.SetLineWeight(3);
+Neutral.HideBubble();
+Neutral.HideTitle();

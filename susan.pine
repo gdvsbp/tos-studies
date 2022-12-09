@@ -77,37 +77,38 @@ else
 indexHighTF = barstate.isrealtime ? 1 : 0
 indexCurrTF = barstate.isrealtime ? 0 : 1
 
-var float previousDailyPeak = na
-var int previousDailyPeakTime = na
-var float currentDailyPeak = na
-var int currentDailyPeakTime = na
-var dailyPeakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+// peaks1D = request.security(syminfo.tickerid, "D", calcPeaks(high[indexHighTF]), gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)
+// valleys1D = request.security(syminfo.tickerid, "D", calcValley(low[indexHighTF]), gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)
+[peaks1D, valley1D, time1D] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low[indexHighTF]), time[indexHighTF]], gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)
 
-[peaks1D, valley1D, time1D] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low[indexHighTF]), time[indexHighTF]], barmerge.gaps_on)
+var float previousDailyPeak = peaks1D
+var int previousDailyPeakTime = time1D
+var float currentDailyPeak = peaks1D
+var int currentDailyPeakTime = time1D
+var dailyPeakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
 // if barstate.islastconfirmedhistory
 //     label.new(bar_index, high, "OHLC values: " + str.tostring(valley1D))
 
-if (peaks1D)
-    previousDailyPeak := currentDailyPeak
-    previousDailyPeakTime := previousDailyPeakTime
-    currentDailyPeak := peaks1D
-    currentDailyPeakTime := time1D
+// if (currentDailyPeak != peaks1D)
+//     previousDailyPeak := currentDailyPeak
+//     previousDailyPeakTime := previousDailyPeakTime
+//     currentDailyPeak := peaks1D
+//     currentDailyPeakTime := time1D
 
 // TODO: I think the offset here needs to be -x amount of time that makes up 1 day.. like a multiplier
 // Ex: 4hr would be -2... 1hr would be -8..
-plot(peaks1D, title='Valley Daily', color=color.new(color.blue, 0), linewidth=3, style=plot.style_circles, offset = 0)
+plot(valley1D, title='Valley Daily', color=color.new(color.orange, 0), linewidth=3, style=plot.style_cross, offset = 0)
+plot(peaks1D, title='Peaks Daily', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_cross, offset = 0)
 
-if (previousDailyPeak > currentDailyPeak)
-    line.delete(dailyPeakLine)
-    dailyPeakLine := line.new(x1 = previousDailyPeakTime, y1 = previousDailyPeak, x2 = currentDailyPeakTime, y2 = currentDailyPeak, xloc = xloc.bar_time, extend = extend.right)
-    line.set_color(id = dailyPeakLine, color = color.blue)
-else
-    line.delete(dailyPeakLine)
+// if (currentDailyPeak > previousDailyPeak)
+//     line.delete(dailyPeakLine)
+//     dailyPeakLine := line.new(x1 = previousDailyPeakTime, y1 = previousDailyPeak, x2 = currentDailyPeakTime, y2 = currentDailyPeak, xloc = xloc.bar_time, extend = extend.right)
+//     line.set_color(id = dailyPeakLine, color = color.blue)
+// else
+//     line.delete(dailyPeakLine)
 
-// ********************************** //
 // ********** HIGH AND LOW ********** //
-// ********************************** //
 // Daily high and low
 dailyhigh = request.security(syminfo.tickerid, 'D', high)
 dailylow = request.security(syminfo.tickerid, 'D', low)
@@ -161,11 +162,11 @@ else
 td = time - time[5]
 
 // Daily high and low lines
-plot(dailyhigh, style=plot.style_line, title='Daily high', color=color.new(#ffffff, 0), linewidth=1, trackprice=true, offset=k)
+plot(dailyhigh, style=plot.style_line, title='Daily High', color=color.new(#ffffff, 0), linewidth=1, trackprice=true, offset=k)
 dh = label.new(x=time + td, y=dailyhigh, text='Day High', xloc=xloc.bar_time, style=label.style_none, textcolor=#ffffff, size=size.normal, textalign=text.align_center)
 label.delete(dh[1])
 
-plot(dailylow, style=plot.style_line, title='Daily low', color=color.new(#9c27b0, 0), linewidth=1, trackprice=true, offset=k)
+plot(dailylow, style=plot.style_line, title='Daily High', color=color.new(#9c27b0, 0), linewidth=1, trackprice=true, offset=k)
 dl = label.new(x=time + td, y=dailylow, text='Day Low', xloc=xloc.bar_time, style=label.style_none, textcolor=#9c27b0, size=size.normal, textalign=text.align_center)
 label.delete(dl[1])
 
@@ -186,4 +187,14 @@ label.delete(pmh[1])
 plot(pm_low, style=plot.style_line, title='Premarket low', trackprice=true, color=color.new(#ff0000, 0), linewidth=1, offset=k)
 pml = label.new(x=time + td, y=pm_low, text='PM Low', xloc=xloc.bar_time, style=label.style_none, textcolor=#ff0000, size=size.normal, textalign=text.align_center)
 label.delete(pml[1])
-// ********************************** //
+// ****** ************************ ********** //
+
+// ********** MOVING AVERAGES & VWAP ********** //
+ema_5 = ta.ema(close, 5)
+sma_15 = ta.sma(close, 15)
+vwap = ta.vwap(close)
+
+plot(ema_5, title = 'SMA 5', color = color.new(color.green, 0))
+plot(sma_15, title = 'SMA 15', color = color.new(color.purple, 0))
+plot(vwap, title = 'VWAP', color = color.new(color.gray, 0))
+// ****** ************************ ********** //

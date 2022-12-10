@@ -98,8 +98,8 @@ var dailyPeakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
 // TODO: I think the offset here needs to be -x amount of time that makes up 1 day.. like a multiplier
 // Ex: 4hr would be -2... 1hr would be -8..
-plot(valley1D, title='Valley Daily', color=color.new(color.orange, 0), linewidth=3, style=plot.style_cross, offset = 0)
-plot(peaks1D, title='Peaks Daily', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_cross, offset = 0)
+// plot(valley1D, title='Valley Daily', color=color.new(color.orange, 0), linewidth=3, style=plot.style_cross, offset = 0)
+// plot(peaks1D, title='Peaks Daily', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_cross, offset = 0)
 
 // if (currentDailyPeak > previousDailyPeak)
 //     line.delete(dailyPeakLine)
@@ -193,8 +193,24 @@ label.delete(pml[1])
 ema_5 = ta.ema(close, 5)
 sma_15 = ta.sma(close, 15)
 vwap = ta.vwap(close)
+// sma = ta.sma(close, 200)
+// sma_200_daily = request.security(syminfo.tickerid, 'D', sma, barmerge.gaps_on, barmerge.lookahead_off)
 
 plot(ema_5, title = 'SMA 5', color = color.new(color.green, 0))
 plot(sma_15, title = 'SMA 15', color = color.new(color.purple, 0))
 plot(vwap, title = 'VWAP', color = color.new(color.gray, 0))
+// plot(sma_200_daily, title = 'Daily 200 SMA', color = close > sma_200_daily ? color.green : color.red)
+// ****** ************************ ********** //
+
+// ********** Daily MACD Cross Alert ********** //
+macdFast = 12
+macdSlow = 26
+dailyFastMA = request.security(syminfo.tickerid, 'D', ta.ema(close, macdFast), barmerge.gaps_on, barmerge.lookahead_off)
+dailySlowMA = request.security(syminfo.tickerid, 'D', ta.ema(close, macdSlow), barmerge.gaps_on, barmerge.lookahead_off)
+dailyMacd = dailyFastMA - dailySlowMA
+dailyMacdSignal = ta.ema(dailyMacd, 9)
+dailyMacdCrossOver = ta.crossover(dailyMacd, dailyMacdSignal)
+dailyMacdCrossUnder = ta.crossunder(dailyMacd, dailyMacdSignal)
+
+alertcondition(dailyMacdCrossOver or dailyMacdCrossUnder, title = 'Daily MACD Cross Alert')
 // ****** ************************ ********** //

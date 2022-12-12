@@ -1,14 +1,8 @@
 // @version=5
 indicator("Susan", "", overlay = true)
 
-// general settings
+// ***** Susan Peak & Valley Functions ***** //
 var offset = -1
-
-var previousPeak = high
-var previousPeakTime = time
-var currentPeak = high
-var currentPeakTime = time
-var peakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
 calcPeaks(high) =>
     if ((high[2] < high[1] and high[0] < high[1]) or (high[3] < high[2] and high[2] == high[1] and high[0] < high[1]) or (high[4] < high[3] and high[3] == high[1] and high[2] == high[1] and high[0] < high[1]))
@@ -16,22 +10,44 @@ calcPeaks(high) =>
     else
         na
 
+calcValley(low) =>
+    if (low[2] > low[1] and low[0] > low[1])
+        low[1]
+    else
+        na
+
+calcValleyMajor(low, valley) => 
+    if ((low[4 + offset] > low[3 + offset] and low[3 + offset] > low[2 + offset] and low[2 + offset] < low[1 + offset]))
+        low[2 + offset]
+    else if ((low[4 + offset] > low[3 + offset] and low[3 + offset] < low[2 + offset] and low[2 + offset] < low[1 + offset]) and na(valley))
+        low[3 + offset]
+    else
+        na
+// ****** ************************ ********** //
+
+var previousPeak = high
+var previousPeakIndex = bar_index
+var currentPeak = high
+var currentPeakIndex = bar_index
+var peakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+
 peaksV = calcPeaks(high)
 
 if (peaksV)
     peaksV := high[1]
     // track the previous and current peak
     previousPeak := currentPeak
-    previousPeakTime := currentPeakTime
+    previousPeakIndex := currentPeakIndex
     currentPeak := high[1]
-    currentPeakTime := time[1]
+    currentPeakIndex := bar_index[1]
 
 plot(peaksV, title='Peaks', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_circles, offset = -1)
+// plotchar(peaksV, 'Peak', "")
 
 // example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
 if (currentPeak < previousPeak)
     line.delete(peakLine)
-    peakLine := line.new(x1 = previousPeakTime, y1 = previousPeak, x2 = currentPeakTime, y2 = currentPeak, xloc = xloc.bar_time, extend = extend.right)
+    peakLine := line.new(x1 = previousPeakIndex, y1 = previousPeak, x2 = currentPeakIndex, y2 = currentPeak, xloc = xloc.bar_index, extend = extend.right)
     line.set_color(id = peakLine, color = color.yellow)
 else
     line.delete(peakLine)
@@ -39,53 +55,54 @@ else
 // VALLEYS
 
 var previousValley = low
-var previousValleyTime = time
+var previousValleyIndex = bar_index
 var currentValley = low
-var currentValleyTime = time
+var currentValleyIndex = bar_index
 var valleyLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
-calcValley(low) =>
-    if (low[2] > low[1] and low[0] > low[1])
-        low[1]
-    else
-        na
-
 valleyV = calcValley(low)
+valleyMajor = calcValleyMajor(low, valleyV)
 
 if (valleyV)
     valleyV := low[1]
     // track the previous and current valley
     previousValley := currentValley
-    previousValleyTime := currentValleyTime
+    previousValleyIndex := currentValleyIndex
     currentValley := low[1]
-    currentValleyTime := time[1]
+    currentValleyIndex := bar_index[1]
 
 
-plot(valleyV, title='Valley', color=color.new(color.orange, 0), linewidth=3, style=plot.style_circles, offset = -1)
+plot(valleyV, title='Valley', color = color.new(color.orange, 0), linewidth = 3, style = plot.style_circles, offset = -1)
+// plot(valleyMajor, title = 'Major Valley', color = color.new(color.orange, 0), linewidth = 5, style = plot.style_circles, offset = -1)
 
 // example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
 if (currentValley > previousValley)
     line.delete(valleyLine)
-    valleyLine := line.new(x1 = previousValleyTime, y1 = previousValley, x2 = currentValleyTime, y2 = currentValley, xloc = xloc.bar_time, extend = extend.right)
+    valleyLine := line.new(x1 = previousValleyIndex, y1 = previousValley, x2 = currentValleyIndex, y2 = currentValley, xloc = xloc.bar_index, extend = extend.right)
     line.set_color(id = valleyLine, color = color.orange)
 else
     line.delete(valleyLine)
 
 
-// DAILY PEAKS
+// DAILY PEAKS (780 minutes in a trading day including extended hours)
 // To avoid differences on historical and realtime bars, you can use this technique, which only returns a value from the higher timeframe on the bar after it completes:
 indexHighTF = barstate.isrealtime ? 1 : 0
 indexCurrTF = barstate.isrealtime ? 0 : 1
 
-// peaks1D = request.security(syminfo.tickerid, "D", calcPeaks(high[indexHighTF]), gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)
-// valleys1D = request.security(syminfo.tickerid, "D", calcValley(low[indexHighTF]), gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)
-[peaks1D, valley1D, time1D] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low[indexHighTF]), time[indexHighTF]], gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)
+// peaks1D = request.security(syminfo.tickerid, "D", calcPeaks(high), gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_off)
+// [valleys1D, target_index, valleyLows] = request.security(syminfo.tickerid, "D", [calcValley(low), bar_index, low[indexHighTF]], gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)[indexCurrTF]
+// [peaks1D, valley1D, target_index, dailyLows] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low)], gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)[indexCurrTF]
 
-var float previousDailyPeak = peaks1D
-var int previousDailyPeakTime = time1D
-var float currentDailyPeak = peaks1D
-var int currentDailyPeakTime = time1D
-var dailyPeakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+// TODO: to kind of plot the correct values, the offset are 780 minutes / the minutes of the current timeframe that is 
+// specified here.. https://www.tradingcode.net/tradingview/time-frame-period/
+
+// plot((valley1D and is_valid_target) ? dailyLows[index_diff] : na, title='Valleys Daily', color=color.new(color.orange, 0), linewidth=3, style=plot.style_cross, offset = 0)
+
+// var float previousDailyPeak = peaks1D
+// var int previousDailyPeakTime = time1D
+// var float currentDailyPeak = peaks1D
+// var int currentDailyPeakTime = time1D
+// var dailyPeakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
 // if barstate.islastconfirmedhistory
 //     label.new(bar_index, high, "OHLC values: " + str.tostring(valley1D))
@@ -193,13 +210,12 @@ label.delete(pml[1])
 ema_5 = ta.ema(close, 5)
 sma_15 = ta.sma(close, 15)
 vwap = ta.vwap(close)
-// sma = ta.sma(close, 200)
-// sma_200_daily = request.security(syminfo.tickerid, 'D', sma, barmerge.gaps_on, barmerge.lookahead_off)
+sma_200_daily = request.security(syminfo.tickerid, 'D', ta.sma(close, 200), barmerge.gaps_on, barmerge.lookahead_off)
 
 plot(ema_5, title = 'SMA 5', color = color.new(color.green, 0))
 plot(sma_15, title = 'SMA 15', color = color.new(color.purple, 0))
 plot(vwap, title = 'VWAP', color = color.new(color.gray, 0))
-// plot(sma_200_daily, title = 'Daily 200 SMA', color = close > sma_200_daily ? color.green : color.red)
+plot(sma_200_daily, title = 'Daily 200 SMA', color = close > sma_200_daily ? color.green : color.red)
 // ****** ************************ ********** //
 
 // ********** Daily MACD Cross Alert ********** //

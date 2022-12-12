@@ -1,6 +1,9 @@
 // @version=5
 indicator("Susan", "", overlay = true)
 
+// User configurations
+show_hide_peak_valley_dots = input(title = "Show Peak & Valley Dots", defval = true)
+
 // ***** Susan Peak & Valley Functions ***** //
 var offset = -1
 
@@ -41,7 +44,7 @@ if (peaksV)
     currentPeak := high[1]
     currentPeakIndex := bar_index[1]
 
-plot(peaksV, title='Peaks', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_circles, offset = -1)
+plot(show_hide_peak_valley_dots ? peaksV : na, title='Peaks', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_circles, offset = -1)
 // plotchar(peaksV, 'Peak', "")
 
 // example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
@@ -72,7 +75,7 @@ if (valleyV)
     currentValleyIndex := bar_index[1]
 
 
-plot(valleyV, title='Valley', color = color.new(color.orange, 0), linewidth = 3, style = plot.style_circles, offset = -1)
+plot(show_hide_peak_valley_dots ? valleyV : na, title='Valley', color = color.new(color.orange, 0), linewidth = 3, style = plot.style_circles, offset = -1)
 // plot(valleyMajor, title = 'Major Valley', color = color.new(color.orange, 0), linewidth = 5, style = plot.style_circles, offset = -1)
 
 // example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them

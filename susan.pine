@@ -19,7 +19,7 @@ calcValley(low) =>
     else
         na
 
-calcValleyMajor(low, valley) => 
+calcValleyMajor(low, valley) =>
     if ((low[4 + offset] > low[3 + offset] and low[3 + offset] > low[2 + offset] and low[2 + offset] < low[1 + offset]))
         low[2 + offset]
     else if ((low[4 + offset] > low[3 + offset] and low[3 + offset] < low[2 + offset] and low[2 + offset] < low[1 + offset]) and na(valley))
@@ -96,7 +96,7 @@ indexCurrTF = barstate.isrealtime ? 0 : 1
 // [valleys1D, target_index, valleyLows] = request.security(syminfo.tickerid, "D", [calcValley(low), bar_index, low[indexHighTF]], gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)[indexCurrTF]
 // [peaks1D, valley1D, target_index, dailyLows] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low)], gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)[indexCurrTF]
 
-// TODO: to kind of plot the correct values, the offset are 780 minutes / the minutes of the current timeframe that is 
+// TODO: to kind of plot the correct values, the offset are 780 minutes / the minutes of the current timeframe that is
 // specified here.. https://www.tradingcode.net/tradingview/time-frame-period/
 
 // plot((valley1D and is_valid_target) ? dailyLows[index_diff] : na, title='Valleys Daily', color=color.new(color.orange, 0), linewidth=3, style=plot.style_cross, offset = 0)
@@ -129,19 +129,8 @@ indexCurrTF = barstate.isrealtime ? 0 : 1
 //     line.delete(dailyPeakLine)
 
 // ********** HIGH AND LOW ********** //
-// Daily high and low
-dailyhigh = request.security(syminfo.tickerid, 'D', high)
-dailylow = request.security(syminfo.tickerid, 'D', low)
-
-// Yesterday's Close
-previousdayclose = request.security(syminfo.tickerid, 'D', close[1])
-
-// Today's open
-dayopen = request.security(syminfo.tickerid, 'D', open)
-
-// Yesterday high and low
-previousdayhigh = request.security(syminfo.tickerid, 'D', high[1])
-previousdaylow = request.security(syminfo.tickerid, 'D', low[1])
+// Daily levels
+[dailyhigh, dailylow, dayopen, previousdayhigh, previousdaylow, previousdayclose] = request.security(syminfo.tickerid, 'D', [high, low, open, high[1], low[1], close])
 
 // Premarket high and low
 t = time("1440","0400-0930")

@@ -2,10 +2,8 @@
 // © gdvsbp
 
 //@version=5
-indicator("Susan dots", overlay = true)
+indicator("Susan Lines Alt", overlay = true)
 
-// tf = input.timeframe(title="Time Frame", defval="5")
-// [_high, _low, _time] = request.security(syminfo.tickerid, tf, [high, low, time], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
 _high = high
 _low = low
 _time = time
@@ -17,13 +15,14 @@ peak_condition(myInput) =>
     case1 = greater_than(myInput[1], myInput[2], true) and greater_than(myInput[1], myInput[0], true)
     case2 = greater_than(myInput[2], myInput[3], true) and myInput[2] == myInput[1] and greater_than(myInput[1], myInput[0], true)
     case3 = greater_than(myInput[3], myInput[4], true) and myInput[3] == myInput[2] and myInput[2] == myInput[1] and greater_than(myInput[1], myInput[0], true)
-    bool peakCondition = case1 or case2 or case3
+    float response = (case1 or case2 or case3) ? myInput[1] : na
 
-// peak_condition_major(myInput) =>
-//     case1 = greater_than(myInput[3], myInput[2], true) and greater_than(myInput[1], myInput[2], true) and greater_than(myInput[1], myInput[0], true)
-//     case2 = greater_than(myInput[2], myInput[3], true) and myInput[2] == myInput[1] and greater_than(myInput[1], myInput[0], true)
-//     case3 = greater_than(myInput[3], myInput[4], true) and myInput[3] == myInput[2] and myInput[2] == myInput[1] and greater_than(myInput[1], myInput[0], true)
-//     bool peakCondition = case1 or case2 or case3
+peak_condition_major(myInput, mySecondaryInput) =>
+    case2 = greater_than(myInput[4], myInput[3], false) and greater_than(myInput[3], myInput[2], false) and greater_than(myInput[1], myInput[2], false) and greater_than(myInput[0], myInput[1], false)
+
+    float peakCondition = case2 ? myInput[2] : na
+    int peakConditionSecondary = case2 ? mySecondaryInput[2] : na
+    [peakCondition, peakConditionSecondary]
 
 valley_condition(myInput) =>
     case1 = greater_than(myInput[1], myInput[2], false) and greater_than(myInput[1], myInput[0], false)
@@ -31,15 +30,28 @@ valley_condition(myInput) =>
     case3 = greater_than(myInput[3], myInput[4], false) and myInput[3] == myInput[2] and myInput[2] == myInput[1] and greater_than(myInput[1], myInput[0], false)
     bool valleyCondition = case1 or case2 or case3
 
+valley_condition_major(myInput, mySecondaryInput) =>
+    case2 = greater_than(myInput[4], myInput[3], true) and greater_than(myInput[3], myInput[2], true) and greater_than(myInput[1], myInput[2], true) and greater_than(myInput[0], myInput[1], true)
 
-bool peakCondition = peak_condition(_high)
-peaksV1 = ta.valuewhen(peakCondition, _high[1], 0)
+    float valleyCondition = case2 ? myInput[2] : na
+    int valleyConditionSecondary = case2 ? mySecondaryInput[2] : na
+    [valleyCondition, valleyConditionSecondary]
+
+float peakCondition = peak_condition(_high)
+peaksV1 = ta.valuewhen(peakCondition, peakCondition, 0)
 peaksV1Time = ta.valuewhen(peakCondition, _time[1], 0)
-peaksV2 = ta.valuewhen(peakCondition, _high[1], 1)
+peaksV2 = ta.valuewhen(peakCondition, peakCondition, 1)
 peaksV2Time = ta.valuewhen(peakCondition, _time[1], 1)
-peaksV3 = ta.valuewhen(peakCondition, _high[1], 2)
+peaksV3 = ta.valuewhen(peakCondition, peakCondition, 2)
 peaksV3Time = ta.valuewhen(peakCondition, _time[1], 2)
 
+[peakMajPrice, peakMajTime] = peak_condition_major(_high, _time)
+peaksV1Maj = ta.valuewhen(peakMajPrice, peakMajPrice, 0)
+peaksV1MajTime = ta.valuewhen(peakMajPrice, peakMajTime, 0)
+peaksV2Maj = ta.valuewhen(peakMajPrice, peakMajPrice, 1)
+peaksV2MajTime = ta.valuewhen(peakMajPrice, peakMajTime, 1)
+peaksV3Maj = ta.valuewhen(peakMajPrice, peakMajPrice, 2)
+peaksV3MajTime = ta.valuewhen(peakMajPrice, peakMajTime, 2)
 
 bool valleyCondition = valley_condition(_low)
 valleysV1 = ta.valuewhen(valleyCondition, _low[1], 0)
@@ -49,172 +61,52 @@ valleysV2Time = ta.valuewhen(valleyCondition, _time[1], 1)
 valleysV3 = ta.valuewhen(valleyCondition, _low[1], 2)
 valleysV3Time = ta.valuewhen(valleyCondition, _time[1], 2)
 
-// [higherHighs, lowerLows, timeH] = request.security(syminfo.tickerid, "5", [high, low, time], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_on)
+[valleyMajPrice, valleyMajTime] = valley_condition_major(_low, _time)
+valleysV1Maj = ta.valuewhen(valleyMajPrice, valleyMajPrice, 0)
+valleysV1MajTime = ta.valuewhen(valleyMajPrice, valleyMajTime, 0)
+valleysV2Maj = ta.valuewhen(valleyMajPrice, valleyMajPrice, 1)
+valleysV2MajTime = ta.valuewhen(valleyMajPrice, valleyMajTime, 1)
+valleysV3Maj = ta.valuewhen(valleyMajPrice, valleyMajPrice, 2)
+valleysV3MajTime = ta.valuewhen(valleyMajPrice, valleyMajTime, 2)
 
-// bool peakConditionH = peak_condition(higherHighs)
-// peaksHV1 = ta.valuewhen(peakConditionH, higherHighs[1], 0)
-// peaksHV1Time = ta.valuewhen(peakConditionH, timeH[1], 0)
-// peaksHV2 = ta.valuewhen(peakConditionH, higherHighs[1], 1)
-// peaksHV2Time = ta.valuewhen(peakConditionH, timeH[1], 1)
-// peaksHV3 = ta.valuewhen(peakConditionH, higherHighs[1], 2)
-// peaksHV3Time = ta.valuewhen(peakConditionH, timeH[1], 2)
-
-
-// bool valleyConditionH = valley_condition(lowerLows)
-// valleysHV1 = ta.valuewhen(valleyConditionH, lowerLows[1], 0)
-// valleysHV1Time = ta.valuewhen(valleyConditionH, timeH[1], 0)
-// valleysHV2 = ta.valuewhen(valleyConditionH, lowerLows[1], 1)
-// valleysHV2Time = ta.valuewhen(valleyConditionH, timeH[1], 1)
-// valleysHV3 = ta.valuewhen(valleyConditionH, lowerLows[1], 2)
-// valleysHV3Time = ta.valuewhen(valleyConditionH, timeH[1], 2)
-
-// if (barstate.islast)
+// peak lines
 peaks1 = line.new(x1 = peaksV2Time, y1 = peaksV2, x2 = peaksV1Time, y2 = peaksV1, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cccc44, 0))
 peaks2 = line.new(x1 = peaksV3Time, y1 = peaksV3, x2 = peaksV2Time, y2 = peaksV2, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cccc44, 50), style=line.style_dashed)
-valleys1 = line.new(x1 = valleysV2Time, y1 = valleysV2, x2 = valleysV1Time, y2 = valleysV1, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cc5544, 0))
-valleys2 = line.new(x1 = valleysV3Time, y1 = valleysV3, x2 = valleysV2Time, y2 = valleysV2, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cc5544, 50), style=line.style_dashed)
+
+peaksMaj1 = line.new(x1 = peaksV2MajTime, y1 = peaksV2Maj, x2 = peaksV1MajTime, y2 = peaksV1Maj, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cccc44, 0), width = 2)
+peaksMaj2 = line.new(x1 = peaksV3MajTime, y1 = peaksV3Maj, x2 = peaksV2MajTime, y2 = peaksV2Maj, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cccc44, 50), style=line.style_dashed, width = 2)
 
 var peakLinesArray = array.new_line()
-var valleyLinesArray = array.new_line()
+var peakMajLinesArray = array.new_line()
+
+array.push(peakMajLinesArray, peaksMaj1) // Push each new line into array after drawing it
+array.push(peakMajLinesArray, peaksMaj2) // Push each new line into array after drawing it
 array.push(peakLinesArray, peaks1) // Push each new line into array after drawing it
 array.push(peakLinesArray, peaks2) // Push each new line into array after drawing it
-array.push(valleyLinesArray, valleys1) // Push each new line into array after drawing it
-array.push(valleyLinesArray, valleys2) // Push each new line into array after drawing it
+
+while array.size(peakMajLinesArray) > 2
+    line.delete(array.remove(peakMajLinesArray, 0))
 
 while array.size(peakLinesArray) > 2
     line.delete(array.remove(peakLinesArray, 0))
 
+// valley lines
+valleys1 = line.new(x1 = valleysV2Time, y1 = valleysV2, x2 = valleysV1Time, y2 = valleysV1, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cc5544, 0))
+valleys2 = line.new(x1 = valleysV3Time, y1 = valleysV3, x2 = valleysV2Time, y2 = valleysV2, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cc5544, 50), style=line.style_dashed)
+
+valleysMaj1 = line.new(x1 = valleysV2MajTime, y1 = valleysV2Maj, x2 = valleysV1MajTime, y2 = valleysV1Maj, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cc5544, 0), width = 2)
+valleysMaj2 = line.new(x1 = valleysV3MajTime, y1 = valleysV3Maj, x2 = valleysV2MajTime, y2 = valleysV2Maj, xloc = xloc.bar_time, extend = extend.right, color=color.new(#cc5544, 50), style=line.style_dashed, width = 2)
+
+var valleyLinesArray = array.new_line()
+var valleyMajLinesArray = array.new_line()
+
+array.push(valleyLinesArray, valleys1) // Push each new line into array after drawing it
+array.push(valleyLinesArray, valleys2) // Push each new line into array after drawing it
+array.push(valleyMajLinesArray, valleysMaj1) // Push each new line into array after drawing it
+array.push(valleyMajLinesArray, valleysMaj2) // Push each new line into array after drawing it
+
 while array.size(valleyLinesArray) > 2
     line.delete(array.remove(valleyLinesArray, 0))
 
-// plot(higherHighs)
-// plot(lowerLows)
-
-// bgcolor(color=ta.crossover(peaksV1[1], peaksV1) ? color.navy : na)
-// bgcolor(color=ta.crossunder(valleysV1[1], valleysV1) ? color.maroon : na)
-
-// var peaksCondensed = array.new_float()
-// var peakTimesCondensed = array.new_int()
-
-// if peakCondition
-//     array.push(peaksCondensed, high[1])
-//     array.push(peakTimesCondensed, time[1])
-// else
-//     na
-
-// plot(peaksV, title='Peaks', color=color.new(#cccc44, 0), linewidth=2, style=plot.style_circles, offset = -1)
-
-// if (barstate.islast)
-//     line.new(x1=bar_index[35], y1=close[35],
-//          x2=bar_index, y2=close)
-
-
-
-
-
-// // @version=5
-// indicator("Susan", "", overlay = true)
-
-// // general settings
-// var offset = -1
-
-// var previousPeak = high
-// var previousPeakTime = time
-// var currentPeak = high
-// var currentPeakTime = time
-// var peakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
-
-// calcPeaks(high) =>
-//     if peakCondition
-//         high[1]
-//     else
-//         na
-
-// peaksV = calcPeaks(high)
-
-// if (peaksV)
-//     peaksV := high[1]
-//     // track the previous and current peak
-//     previousPeak := currentPeak
-//     previousPeakTime := currentPeakTime
-//     currentPeak := high[1]
-//     currentPeakTime := time[1]
-
-// plot(peaksV, title='Peaks', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_circles, offset = -1)
-
-// // example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
-// if (currentPeak < previousPeak)
-//     line.delete(peakLine)
-//     peakLine := line.new(x1 = previousPeakTime, y1 = previousPeak, x2 = currentPeakTime, y2 = currentPeak, xloc = xloc.bar_time, extend = extend.right)
-//     line.set_color(id = peakLine, color = color.yellow)
-// else
-//     line.delete(peakLine)
-
-// // VALLEYS
-
-// var previousValley = low
-// var previousValleyTime = time
-// var currentValley = low
-// var currentValleyTime = time
-// var valleyLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
-
-// calcValley(low) =>
-//     if (low[2] > low[1] and low[0] > low[1])
-//         low[1]
-//     else
-//         na
-
-// valleyV = calcValley(low)
-
-// if (valleyV)
-//     valleyV := low[1]
-//     // track the previous and current valley
-//     previousValley := currentValley
-//     previousValleyTime := currentValleyTime
-//     currentValley := low[1]
-//     currentValleyTime := time[1]
-
-
-// plot(valleyV, title='Valley', color=color.new(color.orange, 0), linewidth=3, style=plot.style_circles, offset = -1)
-
-// // example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
-// if (currentValley > previousValley)
-//     line.delete(valleyLine)
-//     valleyLine := line.new(x1 = previousValleyTime, y1 = previousValley, x2 = currentValleyTime, y2 = currentValley, xloc = xloc.bar_time, extend = extend.right)
-//     line.set_color(id = valleyLine, color = color.orange)
-// else
-//     line.delete(valleyLine)
-
-
-// // DAILY PEAKS
-// // To avoid differences on historical and realtime bars, you can use this technique, which only returns a value from the higher timeframe on the bar after it completes:
-// indexHighTF = barstate.isrealtime ? 1 : 0
-// indexCurrTF = barstate.isrealtime ? 0 : 1
-
-// var float previousDailyPeak = na
-// var int previousDailyPeakTime = na
-// var float currentDailyPeak = na
-// var int currentDailyPeakTime = na
-// var dailyPeakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
-
-// [peaks1D, valley1D, time1D] = request.security(syminfo.tickerid, "D", [calcPeaks(high[indexHighTF]), calcValley(low[indexHighTF]), time[indexHighTF]], barmerge.gaps_on)
-
-// // if barstate.islastconfirmedhistory
-// //     label.new(bar_index, high, "OHLC values: " + str.tostring(valley1D))
-
-// if (peaks1D)
-//     previousDailyPeak := currentDailyPeak
-//     previousDailyPeakTime := previousDailyPeakTime
-//     currentDailyPeak := peaks1D
-//     currentDailyPeakTime := time1D
-
-// // TODO: I think the offset here needs to be -x amount of time that makes up 1 day.. like a multiplier
-// // Ex: 4hr would be -2... 1hr would be -8..
-// plot(peaks1D, title='Valley Daily', color=color.new(color.blue, 0), linewidth=3, style=plot.style_circles, offset = -8)
-
-// if (previousDailyPeak > currentDailyPeak)
-//     line.delete(dailyPeakLine)
-//     dailyPeakLine := line.new(x1 = previousDailyPeakTime, y1 = previousDailyPeak, x2 = currentDailyPeakTime, y2 = currentDailyPeak, xloc = xloc.bar_time, extend = extend.right)
-//     line.set_color(id = dailyPeakLine, color = color.blue)
-// else
-//     line.delete(dailyPeakLine)
+while array.size(valleyMajLinesArray) > 2
+    line.delete(array.remove(valleyMajLinesArray, 0))

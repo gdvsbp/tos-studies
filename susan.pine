@@ -3,6 +3,10 @@ indicator("Susan", "", overlay = true)
 
 // User configurations
 show_hide_peak_valley_dots = input(title = "Show Peak & Valley Dots", defval = true)
+atr_length = input(title = "ATR Length", defval = 14)
+
+// Global Current Candle Indicators
+atr = ta.atr(atr_length)
 
 // ***** Susan Peak & Valley Functions ***** //
 var offset = -1
@@ -18,57 +22,60 @@ calcValley(low) =>
         low[1]
     else
         na
-
-calcValleyMajor(low, valley) =>
-    if ((low[4 + offset] > low[3 + offset] and low[3 + offset] > low[2 + offset] and low[2 + offset] < low[1 + offset]))
-        low[2 + offset]
-    else if ((low[4 + offset] > low[3 + offset] and low[3 + offset] < low[2 + offset] and low[2 + offset] < low[1 + offset]) and na(valley))
-        low[3 + offset]
-    else
-        na
 // ****** ************************ ********** //
 
+var previousPreviousPeak = high
+var previousPreviousPeakIndex = bar_index
 var previousPeak = high
 var previousPeakIndex = bar_index
 var currentPeak = high
 var currentPeakIndex = bar_index
 var peakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+var previousPeakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
 peaksV = calcPeaks(high)
 
 if (peaksV)
     peaksV := high[1]
-    // track the previous and current peak
+    previousPreviousPeak := previousPeak
+    previousPreviousPeakIndex := previousPeakIndex
     previousPeak := currentPeak
     previousPeakIndex := currentPeakIndex
     currentPeak := high[1]
     currentPeakIndex := bar_index[1]
 
 plot(show_hide_peak_valley_dots ? peaksV : na, title='Peaks', color=color.new(color.yellow, 0), linewidth=3, style=plot.style_circles, offset = -1)
-// plotchar(peaksV, 'Peak', "")
 
-// example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
-if (currentPeak < previousPeak)
-    line.delete(peakLine)
-    peakLine := line.new(x1 = previousPeakIndex, y1 = previousPeak, x2 = currentPeakIndex, y2 = currentPeak, xloc = xloc.bar_index, extend = extend.right)
-    line.set_color(id = peakLine, color = color.yellow)
-else
-    line.delete(peakLine)
+// delete old peak lines
+line.delete(peakLine)
+line.delete(previousPeakLine)
+
+// draw new lines
+peakLine := line.new(x1 = previousPeakIndex, y1 = previousPeak, x2 = currentPeakIndex, y2 = currentPeak, xloc = xloc.bar_index, extend = extend.right)
+previousPeakLine := line.new(x1 = previousPreviousPeakIndex, y1 = previousPreviousPeak, x2 = previousPeakIndex, y2 = previousPeak, xloc = xloc.bar_index, extend = extend.right)
+
+// style peak lines
+line.set_color(id = peakLine, color = color.yellow)
+line.set_color(id = previousPeakLine, color = color.yellow)
+line.set_style(id = previousPeakLine, style = line.style_dashed)
 
 // VALLEYS
 
+var previousPreviousValley = low
+var previousPreviousValleyIndex = bar_index
 var previousValley = low
 var previousValleyIndex = bar_index
 var currentValley = low
 var currentValleyIndex = bar_index
 var valleyLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+var previousValleyLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
 
 valleyV = calcValley(low)
-valleyMajor = calcValleyMajor(low, valleyV)
 
 if (valleyV)
     valleyV := low[1]
-    // track the previous and current valley
+    previousPreviousValley := previousValley
+    previousPreviousValleyIndex := previousValleyIndex
     previousValley := currentValley
     previousValleyIndex := currentValleyIndex
     currentValley := low[1]
@@ -76,16 +83,19 @@ if (valleyV)
 
 
 plot(show_hide_peak_valley_dots ? valleyV : na, title='Valley', color = color.new(color.orange, 0), linewidth = 3, style = plot.style_circles, offset = -1)
-// plot(valleyMajor, title = 'Major Valley', color = color.new(color.orange, 0), linewidth = 5, style = plot.style_circles, offset = -1)
 
-// example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
-if (currentValley > previousValley)
-    line.delete(valleyLine)
-    valleyLine := line.new(x1 = previousValleyIndex, y1 = previousValley, x2 = currentValleyIndex, y2 = currentValley, xloc = xloc.bar_index, extend = extend.right)
-    line.set_color(id = valleyLine, color = color.orange)
-else
-    line.delete(valleyLine)
+// delete old valley lines
+line.delete(valleyLine)
+line.delete(previousValleyLine)
 
+// draw new lines
+valleyLine := line.new(x1 = previousValleyIndex, y1 = previousValley, x2 = currentValleyIndex, y2 = currentValley, xloc = xloc.bar_index, extend = extend.right)
+previousValleyLine := line.new(x1 = previousPreviousValleyIndex, y1 = previousPreviousValley, x2 = previousValleyIndex, y2 = previousValley, xloc = xloc.bar_index, extend = extend.right)
+
+// style valley lines
+line.set_color(id = valleyLine, color = color.orange)
+line.set_color(id = previousValleyLine, color = color.orange)
+line.set_style(id = previousValleyLine, style = line.style_dashed)
 
 // DAILY PEAKS (780 minutes in a trading day including extended hours)
 // To avoid differences on historical and realtime bars, you can use this technique, which only returns a value from the higher timeframe on the bar after it completes:
@@ -170,29 +180,53 @@ else
 
 td = time - time[5]
 
-// Daily high and low lines
-plot(dailyhigh, style=plot.style_line, title='Daily High', color=color.new(#ffffff, 0), linewidth=1, trackprice=true, offset=k)
+// TODO: toggle to shower ATR ranges since at higher timeframes it looks insane
+displayAtrRanges = str.tonumber(timeframe.period) < 15
+
+// Daily High
+dayHighAtrUpper = plot(displayAtrRanges ? dailyhigh + atr : na, color = color.new(color.red, 100), title = 'Day High Upper')
+dayHighAtrLower = plot(displayAtrRanges ? dailyhigh - atr : na, color = color.new(color.red, 100), title = 'Day High Lower')
+fill(dayHighAtrUpper, dayHighAtrLower, color = color.new(#ffffff, 90))
+plot(dailyhigh, style=plot.style_line, title='Day High', color=color.new(#ffffff, 0), linewidth=1, trackprice=true, offset=k)
 dh = label.new(x=time + td, y=dailyhigh, text='Day High', xloc=xloc.bar_time, style=label.style_none, textcolor=#ffffff, size=size.normal, textalign=text.align_center)
 label.delete(dh[1])
 
-plot(dailylow, style=plot.style_line, title='Daily High', color=color.new(#9c27b0, 0), linewidth=1, trackprice=true, offset=k)
+// Daily Low
+dayLowAtrUpper = plot(displayAtrRanges ? dailylow + atr : na, color = color.new(color.red, 100), title = 'Day Low Upper')
+dayLowAtrLower = plot(displayAtrRanges ? dailylow - atr : na, color = color.new(color.red, 100), title = 'Day Low Lower')
+fill(dayHighAtrUpper, dayHighAtrLower, color = color.new(#9c27b0, 90))
+plot(dailylow, style=plot.style_line, title='Day Low', color=color.new(#9c27b0, 0), linewidth=1, trackprice=true, offset=k)
 dl = label.new(x=time + td, y=dailylow, text='Day Low', xloc=xloc.bar_time, style=label.style_none, textcolor=#9c27b0, size=size.normal, textalign=text.align_center)
 label.delete(dl[1])
 
-// Previous day high and low lines
-plot(previousdayhigh, style=plot.style_line, title='Yesterday\'s high', color=color.new(#fffb00, 0), linewidth=1, trackprice=true, offset=k)
+// Previous Day High
+pDayHighAtrUpper = plot(displayAtrRanges ? previousdayhigh + atr : na, color = color.new(color.red, 100), title = 'Previous Day High Upper')
+pDayHighAtrBottom = plot(displayAtrRanges ? previousdayhigh - atr : na, color = color.new(color.red, 100), title = 'Previous Day High Lower')
+fill(pDayHighAtrUpper, pDayHighAtrBottom, color = color.new(#fffb00, 90))
+plot(previousdayhigh, style=plot.style_line, title='Previous High', color=color.new(#fffb00, 0), linewidth=1, trackprice=true, offset=k)
 pdh = label.new(x=time + td, y=previousdayhigh, text='Previous High', xloc=xloc.bar_time, style=label.style_none, textcolor=#fbff00, size=size.normal, textalign=text.align_center)
 label.delete(pdh[1])
 
-plot(previousdaylow, style=plot.style_line, title='Yesterday\'s low', color=color.new(#ff90e7, 0), linewidth=1, trackprice=true, offset=k)
+// Previous Day Low
+pDayLowAtrUpper = plot(displayAtrRanges ? previousdaylow + atr : na, color = color.new(color.red, 100) , title = 'Previous Day Low Upper')
+pDayLowAtrBottom = plot(displayAtrRanges ? previousdaylow - atr : na, color = color.new(color.red, 100), title = 'Previous Day Low Lower')
+fill(pDayLowAtrUpper, pDayLowAtrBottom, color = color.new(#ff90e7, 90))
+plot(previousdaylow, style=plot.style_line, title='Previous Low', color=color.new(#ff90e7, 0), linewidth=1, trackprice=true, offset=k)
 pdl = label.new(x=time + td, y=previousdaylow, text='Previous Low', xloc=xloc.bar_time, style=label.style_none, textcolor=#ff90e7, size=size.normal, textalign=text.align_center)
 label.delete(pdl[1])
 
-// Premarket high and low lines
+// Pre-market High
+pmHighAtrUpper = plot(displayAtrRanges ? pm_high + atr : na, color = color.new(color.red, 100), title = 'PM High Upper')
+pmHighAtrBottom = plot(displayAtrRanges ? pm_high - atr : na, color = color.new(color.red, 100), title = 'PM High Lower')
+fill(pmHighAtrUpper, pmHighAtrBottom, color = color.new(#5eff00, 90))
 plot(pm_high, style=plot.style_line, title='Premarket high', trackprice=true, color=color.new(#5eff00, 0), linewidth=1, offset=k)
 pmh = label.new(x=time + td, y=pm_high, text='PM High', xloc=xloc.bar_time, style=label.style_none, textcolor=#5eff00, size=size.normal, textalign=text.align_center)
 label.delete(pmh[1])
 
+// Pre-market Low
+pmLowAtrUpper = plot(displayAtrRanges ? pm_low + atr : na, color = color.new(color.red, 100), title = 'PM Low Upper')
+pmLowAtrBottom = plot(displayAtrRanges ? pm_low - atr : na, color = color.new(color.red, 100), title = 'PM Low Lower')
+fill(pmLowAtrUpper, pmLowAtrBottom, color = color.new(#ff0000, 90))
 plot(pm_low, style=plot.style_line, title='Premarket low', trackprice=true, color=color.new(#ff0000, 0), linewidth=1, offset=k)
 pml = label.new(x=time + td, y=pm_low, text='PM Low', xloc=xloc.bar_time, style=label.style_none, textcolor=#ff0000, size=size.normal, textalign=text.align_center)
 label.delete(pml[1])
@@ -207,7 +241,7 @@ sma_200_daily = request.security(syminfo.tickerid, 'D', ta.sma(close, 200), barm
 plot(ema_5, title = 'SMA 5', color = color.new(color.green, 0))
 plot(sma_15, title = 'SMA 15', color = color.new(color.purple, 0))
 plot(vwap, title = 'VWAP', color = color.new(color.gray, 0))
-plot(sma_200_daily, title = 'Daily 200 SMA', color = close > sma_200_daily ? color.green : color.red)
+// plot(sma_200_daily, title = 'Daily 200 SMA', color = close > sma_200_daily ? color.green : color.red)
 // ****** ************************ ********** //
 
 // ********** Daily MACD Cross Alert ********** //

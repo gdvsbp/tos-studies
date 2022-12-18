@@ -2,67 +2,75 @@
 // © bdoooh
 
 //@version=5
-strategy("Susan Backtest", overlay=true)
+strategy("Susan Backtest", overlay = true, initial_capital = 25000, margin_long = 6, margin_short = 6)
 
-start = timestamp('Jan 01 2022 00:00:00')
-end = timestamp('Dec 10 2022 00:00:00')
+start = timestamp('Jan 01 2018 00:00:00')
+end = timestamp('Dec 17 2022 00:00:00')
 
+currentBalance = strategy.initial_capital + strategy.netprofit
+currentFuturesMarginPrice = (close * syminfo.pointvalue) * .06
+QUANTITY = 1
+
+if (syminfo.type == 'futures')
+    QUANTITY := math.floor(currentBalance / 2000)
+
+// indicators
 [macd, signal, hist] = ta.macd(close, 12, 26, 9)
+ema_5 = ta.ema(close, 5)
+sma_15 = ta.sma(close, 15)
+sma_100 = ta.sma(close, 100)
+sma_200 = ta.sma(close, 200)
+
+// plot the EMA SMA
+plot(ema_5, title = 'SMA 5', color = color.new(color.green, 0))
+plot(sma_15, title = 'SMA 15', color = color.new(color.purple, 0))
+plot(sma_100, title = 'SMA 100', color = color.new(color.orange, 0))
+plot(sma_200, title = 'SMA 200', color = color.new(color.yellow, 0))
+
 atr = ta.atr(14)
 
 stopLoss = low - atr * 2
 takeProfit = high + atr * 2
 
-LongEntry = ta.crossover(macd, signal)
-LongExit = ta.crossunder(macd, signal)
+smaCrossOver = ta.crossover(ema_5, sma_15)
+smaCrossUnder = ta.crossunder(ema_5, sma_15)
+macdCrossOver = ta.crossover(macd, signal)
+macdCrossUnder = ta.crossunder(macd, signal)
 
-var previousPeak = high
-var previousPeakIndex = bar_index
-var currentPeak = high
-var currentPeakIndex = bar_index
-var peakLine = line.new(x1 = 0, y1 = 0, x2 = 0, y2 = 0)
+var int smaCrossIndex = na
+var int smaCrossUnderIndex = na
+var int macdCrossIndex = na
+var int macdCrossUnderIndex = na
 
-calcPeaks(high) =>
-    if ((high[2] < high[1] and high[0] < high[1]) or (high[3] < high[2] and high[2] == high[1] and high[0] < high[1]) or (high[4] < high[3] and high[3] == high[1] and high[2] == high[1] and high[0] < high[1]))
-        high[1]
-    else
-        na
+if (smaCrossOver)
+    smaCrossIndex := bar_index
 
-peaksV = calcPeaks(high)
+if (macdCrossOver)
+    macdCrossIndex := bar_index
 
-if (peaksV)
-    peaksV := high[1]
-    // track the previous and current peak
-    previousPeak := currentPeak
-    previousPeakIndex := currentPeakIndex
-    currentPeak := high[1]
-    currentPeakIndex := bar_index[1]
+if (smaCrossUnder)
+    smaCrossUnderIndex := bar_index
 
-// example of when a peak is lower than the previous peak we delete any old lines and draw a new line connecting them
-if (currentPeak < previousPeak)
-    line.delete(peakLine)
-    peakLine := line.new(x1 = previousPeakIndex, y1 = previousPeak, x2 = currentPeakIndex, y2 = currentPeak, xloc = xloc.bar_index, extend = extend.right)
-    line.set_color(id = peakLine, color = color.yellow)
-else
-    line.delete(peakLine)
+if (macdCrossUnder)
+    macdCrossUnderIndex := bar_index
 
-peakPrice = line.get_price(peakLine, bar_index)
+// if (time >= start and time < end)
+if (smaCrossIndex and macdCrossIndex)
+    if (close > sma_200)
+        if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
+            strategy.entry('long', strategy.long, QUANTITY)
+            smaCrossIndex := na
+            macdCrossIndex := na
 
-hasCrossedPeak = close > peakPrice
+if (macdCrossUnder or smaCrossUnder)
+    strategy.close('long')
 
-if (time >= start and time < end)
-    if (hasCrossedPeak)
-        strategy.entry('long', strategy.long, 100)
-        strategy.exit('exit', 'long', stop = stopLoss, limit = takeProfit)
-    // if (LongEntry)
-    //     strategy.entry('long', strategy.long, 100)
-    //     strategy.exit('exit', 'long', stop = stopLoss, limit = takeProfit)
-    // if (LongExit)
-    //     strategy.close('long', 100)
+if (smaCrossUnderIndex and macdCrossUnderIndex)
+    if (close < sma_200)
+        if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
+            strategy.entry('short', strategy.short, QUANTITY)
+            smaCrossUnderIndex := na
+            macdCrossUnderIndex := na
 
-// if (longCondition)
-//     strategy.entry("My Long Entry Id", strategy.long)
-
-// shortCondition = ta.crossunder(macd, signal)
-// if (shortCondition)
-//     strategy.entry("My Short Entry Id", strategy.short)
+if (macdCrossOver or smaCrossOver)
+    strategy.close('short')

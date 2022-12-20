@@ -5,6 +5,7 @@ indicator("Susan Alerts", "", overlay = true)
 [macd, signal, hist] = ta.macd(close, 12, 26, 9)
 ema_5 = ta.ema(close, 5)
 sma_15 = ta.sma(close, 15)
+sma_200 = ta.sma(close, 200)
 
 // SMA & MACD Crossings
 smaCrossOver = ta.crossover(ema_5, sma_15)
@@ -18,16 +19,16 @@ var int macdCrossIndex = na
 var int macdCrossUnderIndex = na
 
 if (smaCrossOver)
-    smaCrossIndex := bar_index
+	smaCrossIndex := bar_index
 
 if (macdCrossOver)
-    macdCrossIndex := bar_index
+	macdCrossIndex := bar_index
 
 if (smaCrossUnder)
-    smaCrossUnderIndex := bar_index
+	smaCrossUnderIndex := bar_index
 
 if (macdCrossUnder)
-    macdCrossUnderIndex := bar_index
+	macdCrossUnderIndex := bar_index
 
 bool buyLongAlert = na
 bool exitLongAlert = na
@@ -39,24 +40,30 @@ sellBuyAlertMessage = '{ "username": "Susan", "content": "Exit ' + syminfo.ticke
 shortAlertMessage = '{ "username": "Susan", "content": "Short ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
 sellShortAlertMessage = '{ "username": "Susan", "content": "Cover ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
 
-if (smaCrossIndex and macdCrossIndex)
-    if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5) or (smaCrossIndex >= macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
-        alert(buyAlertMessage, alert.freq_once_per_bar)
-        buyLongAlert := true
-        smaCrossIndex := na
-        macdCrossIndex := na
+if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
+	if (smaCrossIndex and macdCrossIndex)
+		if (close > sma_200)
+			if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
+				alert(buyAlertMessage, alert.freq_once_per_bar)
+				smaCrossIndex := na
+				macdCrossIndex := na
+else
+	smaCrossIndex := na
+	macdCrossIndex := na
 
 if (macdCrossUnder or smaCrossUnder)
     alert(sellBuyAlertMessage, alert.freq_once_per_bar)
-    exitLongAlert := true
 
-if (smaCrossUnderIndex and macdCrossUnderIndex)
-    if (macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5) or (smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5)
-        alert(shortAlertMessage, alert.freq_once_per_bar)
-        buyShortAlert := true
-        smaCrossIndex := na
-        macdCrossIndex := na
+if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <= 5)
+	if (smaCrossUnderIndex and macdCrossUnderIndex)
+		if (close < sma_200)
+			if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
+				alert(shortAlertMessage, alert.freq_once_per_bar)
+				smaCrossUnderIndex := na
+				macdCrossUnderIndex := na
+else
+	smaCrossUnderIndex := na
+	macdCrossUnderIndex := na
 
 if (macdCrossOver or smaCrossOver)
-    alert(sellShortAlertMessage, alert.freq_once_per_bar)
-    exitShortAlert := true
+	alert(sellShortAlertMessage, alert.freq_once_per_bar)

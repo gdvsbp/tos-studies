@@ -20,14 +20,14 @@ ema_5 = ta.ema(close, 5)
 sma_15 = ta.sma(close, 15)
 sma_100 = ta.sma(close, 100)
 sma_200 = ta.sma(close, 200)
+rsi = ta.rsi(close, 14)
+atr = ta.atr(14)
 
 // plot the EMA SMA
 plot(ema_5, title = 'SMA 5', color = color.new(color.green, 0))
 plot(sma_15, title = 'SMA 15', color = color.new(color.purple, 0))
 plot(sma_100, title = 'SMA 100', color = color.new(color.orange, 0))
 plot(sma_200, title = 'SMA 200', color = color.new(color.yellow, 0))
-
-atr = ta.atr(14)
 
 stopLoss = low - atr * 2
 takeProfit = high + atr * 2
@@ -55,22 +55,30 @@ if (macdCrossUnder)
     macdCrossUnderIndex := bar_index
 
 // if (time >= start and time < end)
-if (smaCrossIndex and macdCrossIndex)
-    if (close > sma_200)
-        if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
-            strategy.entry('long', strategy.long, QUANTITY)
-            smaCrossIndex := na
-            macdCrossIndex := na
+if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
+    if (smaCrossIndex and macdCrossIndex)
+        if (close > sma_200)
+            if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
+                strategy.entry('long', strategy.long, QUANTITY)
+                smaCrossIndex := na
+                macdCrossIndex := na
+else
+    smaCrossIndex := na
+    macdCrossIndex := na
 
 if (macdCrossUnder or smaCrossUnder)
     strategy.close('long')
 
-if (smaCrossUnderIndex and macdCrossUnderIndex)
-    if (close < sma_200)
-        if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
-            strategy.entry('short', strategy.short, QUANTITY)
-            smaCrossUnderIndex := na
-            macdCrossUnderIndex := na
+if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <= 5)
+    if (smaCrossUnderIndex and macdCrossUnderIndex)
+        if (close < sma_200)
+            if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
+                strategy.entry('short', strategy.short, QUANTITY)
+                smaCrossUnderIndex := na
+                macdCrossUnderIndex := na
+else
+    smaCrossUnderIndex := na
+    macdCrossUnderIndex := na
 
 if (macdCrossOver or smaCrossOver)
     strategy.close('short')

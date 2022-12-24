@@ -4,8 +4,8 @@
 //@version=5
 strategy("Susan Backtest", overlay = true, initial_capital = 25000, margin_long = 6, margin_short = 6)
 
-start = timestamp('Jan 01 2018 00:00:00')
-end = timestamp('Dec 17 2022 00:00:00')
+// configurations
+var ATR_THRESHOLD = 2.5
 
 currentBalance = strategy.initial_capital + strategy.netprofit
 currentFuturesMarginPrice = (close * syminfo.pointvalue) * .06
@@ -29,9 +29,35 @@ plot(sma_15, title = 'SMA 15', color = color.new(color.purple, 0))
 plot(sma_100, title = 'SMA 100', color = color.new(color.orange, 0))
 plot(sma_200, title = 'SMA 200', color = color.new(color.yellow, 0))
 
-stopLoss = low - atr * 2
-takeProfit = high + atr * 2
+// ***** Susan Peak & Valley Functions ***** //
+var offset = -1
 
+calcPeaks(high) =>
+    if ((high[2] < high[1] and high[0] < high[1]) or (high[3] < high[2] and high[2] == high[1] and high[0] < high[1]) or (high[4] < high[3] and high[3] == high[1] and high[2] == high[1] and high[0] < high[1]))
+        high[1]
+    else
+        na
+
+calcValley(low) =>
+    if (low[2] > low[1] and low[0] > low[1])
+        low[1]
+    else
+        na
+// ****** ************************ ********** //
+
+// store off latest peaks and valleys
+var float peak = na
+var float valley = na
+
+peaksV = calcPeaks(high)
+valleyV = calcValley(low)
+
+if (peaksV)
+    peak := high[1]
+if (valleyV)
+    valley := low[1]
+
+// crossovers
 smaCrossOver = ta.crossover(ema_5, sma_15)
 smaCrossUnder = ta.crossunder(ema_5, sma_15)
 macdCrossOver = ta.crossover(macd, signal)
@@ -54,31 +80,78 @@ if (smaCrossUnder)
 if (macdCrossUnder)
     macdCrossUnderIndex := bar_index
 
-// if (time >= start and time < end)
+var float longTakeProfitStep1 = na
+var float longTakeProfitStep2 = na
+var float longTakeProfitStep3 = na
+var float longTakeProfitStep4 = na
+
+var float shortTakeProfitStep1 = na
+var float shortTakeProfitStep2 = na
+var float shortTakeProfitStep3 = na
+var float shortTakeProfitStep4 = na
+
 if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
     if (smaCrossIndex and macdCrossIndex)
-        if (close > sma_200)
+        // if (close > sma_200)
+        if ((valley + atr * ATR_THRESHOLD) >= close)
             if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
-                strategy.entry('long', strategy.long, QUANTITY)
+                strategy.entry('long', strategy.long, QUANTITY, stop = valley)
+                longTakeProfitStep1 := close + atr * 1
+                longTakeProfitStep2 := close + atr * 2
+                longTakeProfitStep3 := close + atr * 3
+                longTakeProfitStep4 := close + atr * 5
+                strategy.exit('long step 1', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep1)
+                strategy.exit('long step 2', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep2)
+                strategy.exit('long step 3', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep3)
+                strategy.exit('long step 4', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep4)
                 smaCrossIndex := na
                 macdCrossIndex := na
 else
     smaCrossIndex := na
     macdCrossIndex := na
 
+if (close >= longTakeProfitStep2 and close < longTakeProfitStep3)
+    strategy.cancel('long step 3')
+    strategy.cancel('long step 4')
+    strategy.exit('long step 3', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep3, stop = strategy.position_avg_price)
+    strategy.exit('long step 4', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep4, stop = strategy.position_avg_price)
+
+if (close >= longTakeProfitStep3)
+    strategy.cancel('long step 4')
+    strategy.exit('long step 4', from_entry = 'long', qty_percent = 25, limit = close + atr * 1.5, stop = longTakeProfitStep2)
+
 if (macdCrossUnder or smaCrossUnder)
     strategy.close('long')
 
 if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <= 5)
     if (smaCrossUnderIndex and macdCrossUnderIndex)
-        if (close < sma_200)
+        // if (close < sma_200)
+        if ((peak - atr * ATR_THRESHOLD) <= close)
             if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
-                strategy.entry('short', strategy.short, QUANTITY)
+                strategy.entry('short', strategy.short, QUANTITY, stop = peak)
+                shortTakeProfitStep1 := close - atr * 1
+                shortTakeProfitStep2 := close - atr * 2
+                shortTakeProfitStep3 := close - atr * 3
+                shortTakeProfitStep4 := close - atr * 5
+                strategy.exit('short step 1', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep1)
+                strategy.exit('short step 2', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep2)
+                strategy.exit('short step 3', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep3)
+                strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep4)
                 smaCrossUnderIndex := na
                 macdCrossUnderIndex := na
 else
     smaCrossUnderIndex := na
     macdCrossUnderIndex := na
+
+if (close <= shortTakeProfitStep2 and close > shortTakeProfitStep3)
+    strategy.cancel('short step 3')
+    strategy.cancel('short step 4')
+    strategy.exit('short step 3', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep3, stop = strategy.position_avg_price)
+    strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep4, stop = strategy.position_avg_price)
+
+if (close <= shortTakeProfitStep3)
+    strategy.cancel('short step 4')
+    strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = close - atr * 1.5, stop = shortTakeProfitStep2)
 
 if (macdCrossOver or smaCrossOver)
     strategy.close('short')

@@ -100,10 +100,10 @@ if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
                 longTakeProfitStep2 := close + atr * 2
                 longTakeProfitStep3 := close + atr * 3
                 longTakeProfitStep4 := close + atr * 5
-                strategy.exit('long step 1', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep1)
-                strategy.exit('long step 2', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep2)
-                strategy.exit('long step 3', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep3)
-                strategy.exit('long step 4', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep4)
+                strategy.exit('long step 1', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep1, stop = valley)
+                strategy.exit('long step 2', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep2, stop = valley)
+                strategy.exit('long step 3', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep3, stop = valley)
+                strategy.exit('long step 4', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep4, stop = valley)
                 smaCrossIndex := na
                 macdCrossIndex := na
 else
@@ -133,10 +133,10 @@ if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <
                 shortTakeProfitStep2 := close - atr * 2
                 shortTakeProfitStep3 := close - atr * 3
                 shortTakeProfitStep4 := close - atr * 5
-                strategy.exit('short step 1', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep1)
-                strategy.exit('short step 2', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep2)
-                strategy.exit('short step 3', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep3)
-                strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep4)
+                strategy.exit('short step 1', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep1, stop = peak)
+                strategy.exit('short step 2', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep2, stop = peak)
+                strategy.exit('short step 3', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep3, stop = peak)
+                strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep4, stop = peak)
                 smaCrossUnderIndex := na
                 macdCrossUnderIndex := na
 else

@@ -242,6 +242,14 @@ plot(ema_5, title = 'SMA 5', color = color.new(color.green, 0))
 plot(sma_15, title = 'SMA 15', color = color.new(color.purple, 0))
 plot(vwap, title = 'VWAP', color = color.new(color.gray, 0))
 // plot(sma_200_daily, title = 'Daily 200 SMA', color = close > sma_200_daily ? color.green : color.red)
+
+crossOverMsg = '{ "username": "Susan", "content": "' + syminfo.ticker + ' 5ema has crossed over the 15sma on the 5m @ ' + str.tostring(close) + '" }'
+crossUnderMsg = '{ "username": "Susan", "content": "' + syminfo.ticker + ' 5ema has crossed under the 15sma on the 5m @ ' + str.tostring(close) + '" }'
+
+if (ta.crossover(ema_5, sma_15))
+    alert(crossOverMsg, alert.freq_once_per_bar)
+if (ta.crossunder(ema_5, sma_15))
+    alert(crossUnderMsg, alert.freq_once_per_bar)
 // ****** ************************ ********** //
 
 // ********** Daily MACD Cross Alert ********** //

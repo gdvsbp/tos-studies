@@ -1,13 +1,46 @@
 // @version=5
 indicator("Susan Alerts", "", overlay = true)
 
+// configurations
+var ATR_THRESHOLD = 2.5
+
 // indicators
 [macd, signal, hist] = ta.macd(close, 12, 26, 9)
 ema_5 = ta.ema(close, 5)
 sma_15 = ta.sma(close, 15)
+sma_100 = ta.sma(close, 100)
 sma_200 = ta.sma(close, 200)
+rsi = ta.rsi(close, 14)
+atr = ta.atr(14)
 
-// SMA & MACD Crossings
+// ***** Susan Peak & Valley Functions ***** //
+
+calcPeaks(high) =>
+    if ((high[2] < high[1] and high[0] < high[1]) or (high[3] < high[2] and high[2] == high[1] and high[0] < high[1]) or (high[4] < high[3] and high[3] == high[1] and high[2] == high[1] and high[0] < high[1]))
+        high[1]
+    else
+        na
+
+calcValley(low) =>
+    if (low[2] > low[1] and low[0] > low[1])
+        low[1]
+    else
+        na
+// ****** ************************ ********** //
+
+// store off latest peaks and valleys
+var float peak = na
+var float valley = na
+
+peaksV = calcPeaks(high)
+valleyV = calcValley(low)
+
+if (peaksV)
+    peak := high[1]
+if (valleyV)
+    valley := low[1]
+
+// crossovers
 smaCrossOver = ta.crossover(ema_5, sma_15)
 smaCrossUnder = ta.crossunder(ema_5, sma_15)
 macdCrossOver = ta.crossover(macd, signal)
@@ -19,51 +52,87 @@ var int macdCrossIndex = na
 var int macdCrossUnderIndex = na
 
 if (smaCrossOver)
-	smaCrossIndex := bar_index
+    smaCrossIndex := bar_index
 
 if (macdCrossOver)
-	macdCrossIndex := bar_index
+    macdCrossIndex := bar_index
 
 if (smaCrossUnder)
-	smaCrossUnderIndex := bar_index
+    smaCrossUnderIndex := bar_index
 
 if (macdCrossUnder)
-	macdCrossUnderIndex := bar_index
+    macdCrossUnderIndex := bar_index
 
-bool buyLongAlert = na
-bool exitLongAlert = na
-bool buyShortAlert = na
-bool exitShortAlert = na
-
-buyAlertMessage = '{ "username": "Susan", "content": "Buy ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
-sellBuyAlertMessage = '{ "username": "Susan", "content": "Exit ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
-shortAlertMessage = '{ "username": "Susan", "content": "Short ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
-sellShortAlertMessage = '{ "username": "Susan", "content": "Cover ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
+tradeType = timeframe.period == "240" ? "Swing" : "Day Trade"
+buyAlertMessage = '{ "username": "Susan", "content": "' + tradeType + ' - Buy ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
+sellBuyAlertMessage = '{ "username": "Susan", "content": "' + tradeType + ' - Exit ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
+shortAlertMessage = '{ "username": "Susan", "content": "' + tradeType + ' - Short ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
+sellShortAlertMessage = '{ "username": "Susan", "content": "' + tradeType + ' - Cover ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
 
 if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
-	if (smaCrossIndex and macdCrossIndex)
-		if (close > sma_200)
-			if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
-				alert(buyAlertMessage, alert.freq_once_per_bar)
-				smaCrossIndex := na
-				macdCrossIndex := na
+    if (smaCrossIndex and macdCrossIndex)
+        // if (close > sma_200)
+        if ((valley + atr * ATR_THRESHOLD) >= close)
+            if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
+                alert(buyAlertMessage, alert.freq_once_per_bar)
+                // longTakeProfitStep1 := close + atr * 1
+                // longTakeProfitStep2 := close + atr * 2
+                // longTakeProfitStep3 := close + atr * 3
+                // longTakeProfitStep4 := close + atr * 5
+                // strategy.exit('long step 1', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep1, stop = valley)
+                // strategy.exit('long step 2', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep2, stop = valley)
+                // strategy.exit('long step 3', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep3, stop = valley)
+                // strategy.exit('long step 4', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep4, stop = valley)
+                smaCrossIndex := na
+                macdCrossIndex := na
 else
-	smaCrossIndex := na
-	macdCrossIndex := na
+    smaCrossIndex := na
+    macdCrossIndex := na
 
-if (macdCrossUnder or smaCrossUnder)
-    alert(sellBuyAlertMessage, alert.freq_once_per_bar)
+// if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
+// 	if (smaCrossIndex and macdCrossIndex)
+// 		if (close > sma_200)
+// 			if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
+// 				alert(buyAlertMessage, alert.freq_once_per_bar)
+// 				smaCrossIndex := na
+// 				macdCrossIndex := na
+// else
+// 	smaCrossIndex := na
+// 	macdCrossIndex := na
+
+// if (macdCrossUnder or smaCrossUnder)
+//     alert(sellBuyAlertMessage, alert.freq_once_per_bar)
 
 if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <= 5)
-	if (smaCrossUnderIndex and macdCrossUnderIndex)
-		if (close < sma_200)
-			if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
-				alert(shortAlertMessage, alert.freq_once_per_bar)
-				smaCrossUnderIndex := na
-				macdCrossUnderIndex := na
+    if (smaCrossUnderIndex and macdCrossUnderIndex)
+        // if (close < sma_200)
+        if ((peak - atr * ATR_THRESHOLD) <= close)
+            if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
+                alert(shortAlertMessage, alert.freq_once_per_bar)
+                // shortTakeProfitStep1 := close - atr * 1
+                // shortTakeProfitStep2 := close - atr * 2
+                // shortTakeProfitStep3 := close - atr * 3
+                // shortTakeProfitStep4 := close - atr * 5
+                // strategy.exit('short step 1', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep1, stop = peak)
+                // strategy.exit('short step 2', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep2, stop = peak)
+                // strategy.exit('short step 3', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep3, stop = peak)
+                // strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep4, stop = peak)
+                smaCrossUnderIndex := na
+                macdCrossUnderIndex := na
 else
-	smaCrossUnderIndex := na
-	macdCrossUnderIndex := na
+    smaCrossUnderIndex := na
+    macdCrossUnderIndex := na
 
-if (macdCrossOver or smaCrossOver)
-	alert(sellShortAlertMessage, alert.freq_once_per_bar)
+// if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <= 5)
+// 	if (smaCrossUnderIndex and macdCrossUnderIndex)
+// 		if (close < sma_200)
+// 			if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
+// 				alert(shortAlertMessage, alert.freq_once_per_bar)
+// 				smaCrossUnderIndex := na
+// 				macdCrossUnderIndex := na
+// else
+// 	smaCrossUnderIndex := na
+// 	macdCrossUnderIndex := na
+
+// if (macdCrossOver or smaCrossOver)
+// 	alert(sellShortAlertMessage, alert.freq_once_per_bar)

@@ -2,7 +2,7 @@
 // © bdoooh
 
 //@version=5
-strategy("Susan Backtest", overlay = true, initial_capital = 25000, margin_long = 6, margin_short = 6)
+strategy("Susan Backtest", overlay = true, initial_capital = 25000)
 
 // configurations
 var ATR_THRESHOLD = 2.5
@@ -12,7 +12,7 @@ currentFuturesMarginPrice = (close * syminfo.pointvalue) * .06
 QUANTITY = 1
 
 if (syminfo.type == 'futures')
-    QUANTITY := math.floor(currentBalance / 2000)
+    QUANTITY := math.floor(currentBalance / currentFuturesMarginPrice)
 
 // indicators
 [macd, signal, hist] = ta.macd(close, 12, 26, 9)
@@ -80,11 +80,13 @@ if (smaCrossUnder)
 if (macdCrossUnder)
     macdCrossUnderIndex := bar_index
 
+var float longTakeProfitStep0 = na
 var float longTakeProfitStep1 = na
 var float longTakeProfitStep2 = na
 var float longTakeProfitStep3 = na
 var float longTakeProfitStep4 = na
 
+var float shortTakeProfitStep0 = na
 var float shortTakeProfitStep1 = na
 var float shortTakeProfitStep2 = na
 var float shortTakeProfitStep3 = na
@@ -96,6 +98,7 @@ if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
         if ((valley + atr * ATR_THRESHOLD) >= close)
             if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
                 strategy.entry('long', strategy.long, QUANTITY, stop = valley)
+                longTakeProfitStep0 := close + atr * 0.5
                 longTakeProfitStep1 := close + atr * 1
                 longTakeProfitStep2 := close + atr * 2
                 longTakeProfitStep3 := close + atr * 3
@@ -109,6 +112,14 @@ if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
 else
     smaCrossIndex := na
     macdCrossIndex := na
+
+if (close >= longTakeProfitStep1 and close < longTakeProfitStep2)
+    strategy.cancel('long step 2')
+    strategy.cancel('long step 3')
+    strategy.cancel('long step 4')
+    strategy.exit('long step 2', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep3, stop = strategy.position_avg_price)
+    strategy.exit('long step 3', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep3, stop = strategy.position_avg_price)
+    strategy.exit('long step 4', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep4, stop = strategy.position_avg_price)    
 
 if (close >= longTakeProfitStep2 and close < longTakeProfitStep3)
     strategy.cancel('long step 3')
@@ -129,6 +140,7 @@ if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <
         if ((peak - atr * ATR_THRESHOLD) <= close)
             if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
                 strategy.entry('short', strategy.short, QUANTITY, stop = peak)
+                shortTakeProfitStep0 := close - atr * 0.5
                 shortTakeProfitStep1 := close - atr * 1
                 shortTakeProfitStep2 := close - atr * 2
                 shortTakeProfitStep3 := close - atr * 3
@@ -142,6 +154,14 @@ if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <
 else
     smaCrossUnderIndex := na
     macdCrossUnderIndex := na
+
+// if (close <= shortTakeProfitStep1 and close > shortTakeProfitStep2)
+//     strategy.cancel('short step 2')
+//     strategy.cancel('short step 3')
+//     strategy.cancel('short step 4')
+//     strategy.exit('short step 2', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep3, stop = strategy.position_avg_price)
+//     strategy.exit('short step 3', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep3, stop = strategy.position_avg_price)
+//     strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep4, stop = strategy.position_avg_price) 
 
 if (close <= shortTakeProfitStep2 and close > shortTakeProfitStep3)
     strategy.cancel('short step 3')

@@ -63,76 +63,70 @@ if (smaCrossUnder)
 if (macdCrossUnder)
     macdCrossUnderIndex := bar_index
 
+var float longTakeProfitStep0 = na
+var float longTakeProfitStep1 = na
+var float longTakeProfitStep2 = na
+var float longTakeProfitStep3 = na
+var float longTakeProfitStep4 = na
+
+var float shortTakeProfitStep0 = na
+var float shortTakeProfitStep1 = na
+var float shortTakeProfitStep2 = na
+var float shortTakeProfitStep3 = na
+var float shortTakeProfitStep4 = na
+
+// function to format the alert to discord JSON style
+generateDiscordMsg(msg) =>
+	'{ "username": "Susan", "content": "' + msg + '" }'
+
+// 4hrs are swings and any other are day trade for now
 tradeType = timeframe.period == "240" ? "Swing" : "Day Trade"
-buyAlertMessage = '{ "username": "Susan", "content": "' + tradeType + ' - Buy ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
-sellBuyAlertMessage = '{ "username": "Susan", "content": "' + tradeType + ' - Exit ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
-shortAlertMessage = '{ "username": "Susan", "content": "' + tradeType + ' - Short ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
-sellShortAlertMessage = '{ "username": "Susan", "content": "' + tradeType + ' - Cover ' + syminfo.ticker + ' at ' + str.tostring(close) + '" }'
+
+// scaffold out a base discord message to send
+base_msg = "**" + tradeType + "**" + "\n"
+base_msg := base_msg + "Stock: " + syminfo.ticker + "\n"
+base_msg := base_msg + "- Entry: " + str.tostring(close) + "\n"
 
 if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
     if (smaCrossIndex and macdCrossIndex)
-        // if (close > sma_200)
         if ((valley + atr * ATR_THRESHOLD) >= close)
             if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
-                alert(buyAlertMessage, alert.freq_once_per_bar)
-                // longTakeProfitStep1 := close + atr * 1
-                // longTakeProfitStep2 := close + atr * 2
-                // longTakeProfitStep3 := close + atr * 3
-                // longTakeProfitStep4 := close + atr * 5
-                // strategy.exit('long step 1', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep1, stop = valley)
-                // strategy.exit('long step 2', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep2, stop = valley)
-                // strategy.exit('long step 3', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep3, stop = valley)
-                // strategy.exit('long step 4', from_entry = 'long', qty_percent = 25, limit = longTakeProfitStep4, stop = valley)
+                longTakeProfitStep1 := close + atr * 1
+                longTakeProfitStep2 := close + atr * 2
+                longTakeProfitStep3 := close + atr * 3
+                longTakeProfitStep4 := close + atr * 5
+
+                buy_message = base_msg + "- Stop: " + str.tostring(valley) + "\n"
+                buy_message := buy_message + "- Targets: " +  str.tostring(longTakeProfitStep1) + ", " + str.tostring(longTakeProfitStep2) + ", " + str.tostring(longTakeProfitStep3) + ", " + str.tostring(longTakeProfitStep4)
+                
+                alert_message = generateDiscordMsg(buy_message)
+
+                alert(alert_message, alert.freq_once_per_bar_close)
+
                 smaCrossIndex := na
                 macdCrossIndex := na
 else
     smaCrossIndex := na
     macdCrossIndex := na
 
-// if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
-// 	if (smaCrossIndex and macdCrossIndex)
-// 		if (close > sma_200)
-// 			if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
-// 				alert(buyAlertMessage, alert.freq_once_per_bar)
-// 				smaCrossIndex := na
-// 				macdCrossIndex := na
-// else
-// 	smaCrossIndex := na
-// 	macdCrossIndex := na
-
-// if (macdCrossUnder or smaCrossUnder)
-//     alert(sellBuyAlertMessage, alert.freq_once_per_bar)
-
 if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <= 5)
     if (smaCrossUnderIndex and macdCrossUnderIndex)
-        // if (close < sma_200)
         if ((peak - atr * ATR_THRESHOLD) <= close)
             if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
-                alert(shortAlertMessage, alert.freq_once_per_bar)
-                // shortTakeProfitStep1 := close - atr * 1
-                // shortTakeProfitStep2 := close - atr * 2
-                // shortTakeProfitStep3 := close - atr * 3
-                // shortTakeProfitStep4 := close - atr * 5
-                // strategy.exit('short step 1', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep1, stop = peak)
-                // strategy.exit('short step 2', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep2, stop = peak)
-                // strategy.exit('short step 3', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep3, stop = peak)
-                // strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = shortTakeProfitStep4, stop = peak)
+                shortTakeProfitStep1 := close - atr * 1
+                shortTakeProfitStep2 := close - atr * 2
+                shortTakeProfitStep3 := close - atr * 3
+                shortTakeProfitStep4 := close - atr * 5
+
+                short_message = base_msg + "- Stop: " + str.tostring(peak) + "\n"
+                short_message := short_message + "- Targets: " +  str.tostring(shortTakeProfitStep1) + ", " + str.tostring(shortTakeProfitStep2) + ", " + str.tostring(shortTakeProfitStep3) + ", " + str.tostring(shortTakeProfitStep4)
+                
+                alert_message = generateDiscordMsg(short_message)
+
+                alert(alert_message, alert.freq_once_per_bar_close)
+                
                 smaCrossUnderIndex := na
                 macdCrossUnderIndex := na
 else
     smaCrossUnderIndex := na
     macdCrossUnderIndex := na
-
-// if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <= 5)
-// 	if (smaCrossUnderIndex and macdCrossUnderIndex)
-// 		if (close < sma_200)
-// 			if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
-// 				alert(shortAlertMessage, alert.freq_once_per_bar)
-// 				smaCrossUnderIndex := na
-// 				macdCrossUnderIndex := na
-// else
-// 	smaCrossUnderIndex := na
-// 	macdCrossUnderIndex := na
-
-// if (macdCrossOver or smaCrossOver)
-// 	alert(sellShortAlertMessage, alert.freq_once_per_bar)

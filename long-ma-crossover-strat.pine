@@ -31,6 +31,7 @@ maBigSlow = ta.sma(close, 200)
 
 // ATR
 atr = ta.atr(14)
+lastAtr = atr
 
 // MA
 maFast = ta.ema(close, 5)
@@ -74,23 +75,24 @@ else
     maFastColor := colYlw
 plot(maFast, title = 'Fast MA', color = maFastColor, linewidth = 2, style = plot.style_line)
 
-lastMoveTooBig = (high[1] - low[1]) > atr * 2
+lastMoveTooBig = (high[1] - low[1]) > lastAtr * 2
 
+// TODO: check if crossover is > 50-60% candle body before going in
 crossUnder = ta.crossunder(close, maBigFast)
 crossOver = ta.crossover(close, maBigFast)
 
-shortStop = high[1]
-longStop = low[1]
-// shortStop = close + atr * 1
-// longStop = close - atr * 1
+// NOTE: taking the most distant high/low from the last 4 bars to act as a stop... raises success rate to 60%+
+shortStop = math.max(high[2], high[1], high[3], high[4])
+longStop = math.min(low[2], low[1], low[3], low[4])
 
-if (lastMoveTooBig != true and crossUnder)
-    strategy.entry('short', strategy.short, QUANTITY, stop = maBigFastTop)
-else if (lastMoveTooBig != true and crossOver)
-    strategy.entry('long', strategy.long, QUANTITY, stop = maBigFastBtm)
+// only make new entries if we have no positions (duh)
+if (strategy.position_size == 0)
+    if (lastMoveTooBig != true and crossUnder)
+        strategy.entry('short', strategy.short, QUANTITY, stop = maBigFastTop)
+    else if (lastMoveTooBig != true and crossOver)
+        strategy.entry('long', strategy.long, QUANTITY, stop = maBigFastBtm)
+else if (strategy.position_size < 0)
+    strategy.exit('short 1', from_entry = 'short', qty_percent = 100, limit = close - lastAtr * 2, stop = shortStop)
+else if (strategy.position_size > 0)
+    strategy.exit('long 1', from_entry = 'long', qty_percent = 100, limit = close + lastAtr * 2, stop = longStop)
 
-if (strategy.position_size < 0)
-    strategy.exit('short 1', from_entry = 'short', qty_percent = 100, limit = close - atr * 2, stop = shortStop)
-
-if (strategy.position_size > 0)
-    strategy.exit('long 1', from_entry = 'long', qty_percent = 100, limit = close + atr * 2, stop = longStop)

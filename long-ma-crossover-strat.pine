@@ -76,9 +76,21 @@ plot(maFast, title = 'Fast MA', color = maFastColor, linewidth = 2, style = plot
 
 lastMoveTooBig = (high[1] - low[1]) > atr * 2
 
-if (lastMoveTooBig != true and ta.crossunder(close, maBigFast))
+crossUnder = ta.crossunder(close, maBigFast)
+crossOver = ta.crossover(close, maBigFast)
+
+shortStop = high[1]
+longStop = low[1]
+// shortStop = close + atr * 1
+// longStop = close - atr * 1
+
+if (lastMoveTooBig != true and crossUnder)
     strategy.entry('short', strategy.short, QUANTITY, stop = maBigFastTop)
-    strategy.exit('short 1', from_entry = 'short', qty_percent = 100, limit = close - atr * (trendingSuperDn ? 3.5 : 2), stop = high[1])
-else if (lastMoveTooBig != true and ta.crossover(close, maBigFast))
+else if (lastMoveTooBig != true and crossOver)
     strategy.entry('long', strategy.long, QUANTITY, stop = maBigFastBtm)
-    strategy.exit('long 1', from_entry = 'long', qty_percent = 100, limit = close + atr * (trendingSuperUp ? 3.5 : 2), stop = low[1])
+
+if (strategy.position_size < 0)
+    strategy.exit('short 1', from_entry = 'short', qty_percent = 100, limit = close - atr * 2, stop = shortStop)
+
+if (strategy.position_size > 0)
+    strategy.exit('long 1', from_entry = 'long', qty_percent = 100, limit = close + atr * 2, stop = longStop)

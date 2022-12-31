@@ -188,15 +188,15 @@ haMarketBias =
 // }
 // ****** ************************ ********** //
 
-if (long and haMarketBias == 'green' and hist > 0)
-    strategy.entry('long', strategy.long, QUANTITY, stop = close - atr * 1.5)
-    longTakeProfitStep1 := close + atr * 1
-    strategy.exit('long step 1', from_entry = 'long', qty_percent = 100, limit = longTakeProfitStep1, stop = close - atr * 1.5)
+// if (long and haMarketBias == 'green' and hist > 0)
+//     strategy.entry('long', strategy.long, QUANTITY, stop = close - atr * 1.5)
+//     longTakeProfitStep1 := close + atr * 1
+//     strategy.exit('long step 1', from_entry = 'long', qty_percent = 100, limit = longTakeProfitStep1, stop = close - atr * 1.5)
 
-if (short and haMarketBias == 'red' and hist < 0)
-    strategy.entry('short', strategy.short, QUANTITY, stop = close + atr * 1.5)
-    shortTakeProfitStep1 := close - atr * 1
-    strategy.exit('short step 1', from_entry = 'short', qty_percent = 100, limit = shortTakeProfitStep1, stop = close + atr * 1.5)
+// if (short and haMarketBias == 'red' and hist < 0)
+//     strategy.entry('short', strategy.short, QUANTITY, stop = close + atr * 1.5)
+//     shortTakeProfitStep1 := close - atr * 1
+//     strategy.exit('short step 1', from_entry = 'short', qty_percent = 100, limit = shortTakeProfitStep1, stop = close + atr * 1.5)
 
 if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
     if (smaCrossIndex and macdCrossIndex)

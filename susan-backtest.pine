@@ -2,7 +2,7 @@
 // © bdoooh
 
 //@version=5
-strategy("Susan Backtest", overlay = true, initial_capital = 25000)
+strategy("Susan Backtest", overlay = true, initial_capital = 10000)
 
 // configurations
 var ATR_THRESHOLD = 3.5
@@ -101,16 +101,108 @@ var float shortTakeProfitStep2 = na
 var float shortTakeProfitStep3 = na
 var float shortTakeProfitStep4 = na
 
-buyLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "buy", "stopLoss": { "stopPrice": ' + str.tostring(valley) + '}, "quantity": 1 }'
-exitLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
-shortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "sell", "stopLoss": { "stopPrice": ' + str.tostring(peak) + '}, "quantity": 1 }'
-exitShortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
+// ***** Twin Range Filter ***** //
+per1 = 27 // fast period
+mult1 = 1.6 // fast range
+per2 = 55 // slow period
+mult2 = 2 // slow range
+source = close
+
+smoothrng(x, t, m) =>
+    wper = t * 2 - 1
+    avrng = ta.ema(math.abs(x - x[1]), t)
+    smoothrng = ta.ema(avrng, wper) * m
+    smoothrng
+smrng1 = smoothrng(source, per1, mult1)
+smrng2 = smoothrng(source, per2, mult2)
+smrng = (smrng1 + smrng2) / 2
+
+// Range Filter
+rngfilt(x, r) =>
+    rngfilt = x
+    rngfilt := x > nz(rngfilt[1]) ? x - r < nz(rngfilt[1]) ? nz(rngfilt[1]) : x - r : 
+       x + r > nz(rngfilt[1]) ? nz(rngfilt[1]) : x + r
+    rngfilt
+filt = rngfilt(source, smrng)
+
+upward = 0.0
+upward := filt > filt[1] ? nz(upward[1]) + 1 : filt < filt[1] ? 0 : nz(upward[1])
+downward = 0.0
+downward := filt < filt[1] ? nz(downward[1]) + 1 : filt > filt[1] ? 0 : nz(downward[1])
+
+hband = filt + smrng
+lband = filt - smrng
+
+longCond = bool(na)
+shortCond = bool(na)
+longCond := source > filt and source > source[1] and upward > 0 or source > filt and source < source[1] and upward > 0
+shortCond := source < filt and source < source[1] and downward > 0 or source < filt and source > source[1] and downward > 0
+
+CondIni = 0
+CondIni := longCond ? 1 : shortCond ? -1 : CondIni[1]
+
+long = longCond and CondIni[1] == -1
+short = shortCond and CondIni[1] == 1
+// ****** ************************ ********** //
+
+// ***** HA Market Bias ***** //
+tf(_res, _exp, gaps_on) =>
+    gaps_on == 0 ? request.security(syminfo.tickerid, _res, _exp) : gaps_on == true ? request.security(syminfo.tickerid, _res, _exp, barmerge.gaps_on, barmerge.lookahead_off) : request.security(syminfo.tickerid, _res, _exp, barmerge.gaps_off, barmerge.lookahead_off)
+ha_htf = ''
+ha_len = 60
+ha_len2 = 10
+
+// Calculations {
+o = ta.ema(open, ha_len)
+c = ta.ema(close, ha_len)
+h = ta.ema(high, ha_len)
+l = ta.ema(low, ha_len)
+
+haclose = tf(ha_htf, (o + h + l + c) / 4, 0)
+xhaopen = tf(ha_htf, (o + c) / 2, 0)
+haopen = na(xhaopen[1]) ? (o + c) / 2 : (xhaopen[1] + haclose[1]) / 2
+hahigh = math.max(h, math.max(haopen, haclose))
+halow = math.min(l, math.min(haopen, haclose))
+
+
+o2 = tf(ha_htf, ta.ema(haopen, ha_len2), 0)
+c2 = tf(ha_htf, ta.ema(haclose, ha_len2), 0)
+h2 = tf(ha_htf, ta.ema(hahigh, ha_len2), 0)
+l2 = tf(ha_htf, ta.ema(halow, ha_len2), 0)
+
+ha_avg = (h2 + l2) / 2
+// }
+
+// Oscillator {
+osc_len = input.int(7, "Oscillator Period", group="HA Market Bias")
+
+osc_bias = 100 *(c2 - o2)
+osc_smooth = ta.ema(osc_bias, osc_len)
+
+haMarketBias = 
+  (osc_bias > 0) and (osc_bias >= osc_smooth) ? 'green' : 
+  (osc_bias > 0) and (osc_bias < osc_smooth) ? 'green' : 
+  (osc_bias < 0) and (osc_bias <= osc_smooth) ? 'red' : 
+  (osc_bias < 0) and (osc_bias > osc_smooth) ? 'red' :
+  na
+// }
+// ****** ************************ ********** //
+
+if (long and haMarketBias == 'green' and hist > 0)
+    strategy.entry('long', strategy.long, QUANTITY, stop = close - atr * 1.5)
+    longTakeProfitStep1 := close + atr * 1
+    strategy.exit('long step 1', from_entry = 'long', qty_percent = 100, limit = longTakeProfitStep1, stop = close - atr * 1.5)
+
+if (short and haMarketBias == 'red' and hist < 0)
+    strategy.entry('short', strategy.short, QUANTITY, stop = close + atr * 1.5)
+    shortTakeProfitStep1 := close - atr * 1
+    strategy.exit('short step 1', from_entry = 'short', qty_percent = 100, limit = shortTakeProfitStep1, stop = close + atr * 1.5)
 
 if ((bar_index - smaCrossIndex) <= 5 or (bar_index - macdCrossIndex) <= 5)
     if (smaCrossIndex and macdCrossIndex)
         if ((valley + atr * ATR_THRESHOLD) >= close and rsi < LONG_RSI_LIMIT)
             if ((macdCrossIndex >= smaCrossIndex and (macdCrossIndex - smaCrossIndex) <= 5)) or ((smaCrossIndex > macdCrossIndex and (smaCrossIndex - macdCrossIndex) <= 5))
-                strategy.entry('long', strategy.long, QUANTITY, stop = valley, alert_message = buyLongAlertMsg)
+                strategy.entry('long', strategy.long, QUANTITY, stop = valley)
                 
                 longTakeProfitStep0 := close + atr * 0.5
                 longTakeProfitStep1 := close + atr * 1
@@ -151,13 +243,13 @@ if (QUANTITY >= 4)
         strategy.exit('long step 4', from_entry = 'long', limit = close + atr * 1.5, stop = longTakeProfitStep2)
 
 if (macdCrossUnder or smaCrossUnder)
-    strategy.close('long', alert_message = exitLongAlertMsg)
+    strategy.close('long')
 
 if ((bar_index - smaCrossUnderIndex) <= 5 or (bar_index - macdCrossUnderIndex) <= 5)
     if (smaCrossUnderIndex and macdCrossUnderIndex)
         if ((peak - atr * ATR_THRESHOLD) <= close and rsi > SHORT_RSI_LIMIT)
             if ((macdCrossUnderIndex >= smaCrossUnderIndex and (macdCrossUnderIndex - smaCrossUnderIndex) <= 5)) or ((smaCrossUnderIndex >= macdCrossUnderIndex and (smaCrossUnderIndex - macdCrossUnderIndex) <= 5))
-                strategy.entry('short', strategy.short, QUANTITY, stop = peak, alert_message = shortAlertMsg)
+                strategy.entry('short', strategy.short, QUANTITY, stop = peak)
                 
                 shortTakeProfitStep0 := close - atr * 0.5
                 shortTakeProfitStep1 := close - atr * 1
@@ -198,4 +290,4 @@ if (QUANTITY >= 4)
         strategy.exit('short step 4', from_entry = 'short', qty_percent = 25, limit = close - atr * 1.5, stop = shortTakeProfitStep2)
 
 if (macdCrossOver or smaCrossOver)
-    strategy.close('short', alert_message = exitShortAlertMsg)
+    strategy.close('short')

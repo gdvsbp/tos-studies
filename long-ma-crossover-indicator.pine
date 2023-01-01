@@ -1,0 +1,118 @@
+//@version=5
+indicator("Long MA Crossover Indicator", "", overlay = true)
+
+_high = high
+_low = low
+_time = time
+
+colRed = #FF6666
+colGrn = #66FF66
+colBlu = #6666FF
+colCyn = #008B8B
+colMag = #FF1DCE
+colYlw = #FFFF66
+
+colSlowMa = colRed
+colFastMa = colGrn
+
+// Super slow MA
+maBigFast = ta.sma(close, 100)
+maBigSlow = ta.sma(close, 200)
+
+// ATR
+atr = ta.atr(14)
+lastAtr = atr
+
+// MA
+maFast = ta.ema(close, 5)
+maSlow = ta.sma(close, 15)
+maMacd = maFast - maSlow
+maMacdSignal = ta.ema(maMacd, 9)
+// MACD
+[macd, signal, hist] = ta.macd(close, 12, 26, 9)
+// RSI
+rsi = ta.rsi(close, 14)
+rsiMa = ta.sma(rsi, 3)
+// Stochastic
+stochK = ta.sma(ta.stoch(close, high, low, 14), 1)
+stochD = ta.sma(stochK, 3)
+
+plot(maBigFast, title = 'Big Fast MA', color = color.new(colFastMa, 33), linewidth = 1, style = plot.style_line)
+maBigFastTop = maBigFast + atr
+maBigFastBtm = maBigFast - atr
+plotBigFastTop = plot(maBigFastTop, color = na)
+plotBigFastBtm = plot(maBigFastBtm, color = na)
+fill(plotBigFastTop, plotBigFastBtm, color=color.new(colFastMa, 90), title='MA Cloud1')
+
+plot(maBigSlow, title = 'Big Slow MA', color = color.new(colSlowMa, 33), linewidth = 1, style = plot.style_line)
+maBigSlowTop = maBigSlow + atr
+maBigSlowBtm = maBigSlow - atr
+plotBigSlowTop = plot(maBigSlowTop, color = na)
+plotBigSlowBtm = plot(maBigSlowBtm, color = na)
+fill(plotBigSlowTop, plotBigSlowBtm, color=color.new(colSlowMa, 90), title='MA Cloud2')
+
+trendingUp = maFast > maBigSlow and ta.rising(maBigFast, 5)
+trendingDn = maFast < maBigSlow and ta.falling(maBigFast, 5)
+trendingSuperUp = maBigFastBtm > maBigSlowTop and ta.rising(maBigFast, 5) and ta.rising(maBigSlow, 5)
+trendingSuperDn = maBigFastTop < maBigSlowBtm and ta.falling(maBigFast, 5) and ta.falling(maBigSlow, 5)
+
+var color maFastColor = na
+if (maFast > maBigFastTop and maFast > maBigSlowTop)
+    maFastColor := colGrn
+else if (maFast < maBigFastBtm and maFast < maBigSlowBtm)
+    maFastColor := colRed
+else
+    maFastColor := colYlw
+plot(maFast, title = 'Fast MA', color = maFastColor, linewidth = 2, style = plot.style_line)
+
+lastMoveTooBig = (high[1] - low[1]) > lastAtr * 2
+
+// TODO: check if crossover is > 50-60% candle body before going in
+crossUnder = ta.crossunder(close, maBigFast)
+crossOver = ta.crossover(close, maBigFast)
+
+// NOTE: taking the most distant high/low from the last 4 bars to act as a stop... raises success rate to 60%+
+shortStop = math.max(high[2], high[1], high[3], high[4])
+longStop = math.min(low[2], low[1], low[3], low[4])
+
+// this keeps moving up the target based on the current candle close so it's kinda trailing up
+long_target = close + lastAtr * 2
+short_target = close - lastAtr * 2
+
+var isLong = false
+var isShort = false
+
+// Configure Labels {
+var label longBuyLabel = na
+var label shortBuyLabel = na
+var label exitLongLabel = na
+var label coverShortLabel = na
+// }
+
+// Configure TradersPost Alert Messages {
+buyLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "buy", "quantity": 1 }'
+exitLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
+shortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "sell", "quantity": 1 }'
+exitShortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
+// }
+
+// only make new entries if we have no positions (duh)
+if (isLong == false and isShort == false)
+    if (lastMoveTooBig != true and crossUnder)
+        isShort := true
+        shortBuyLabel := label.new(bar_index, high, text = "Short", color = color.red, textcolor = color.white, size = size.tiny)
+        alert(shortAlertMsg)
+    else if (lastMoveTooBig != true and crossOver)
+        isLong := true
+        longBuyLabel := label.new(bar_index, high, text = "Buy", color = color.lime, size = size.tiny)
+        alert(buyLongAlertMsg)
+else if (isShort)
+    if (shortStop >= high or low <= short_target)
+        coverShortLabel := label.new(bar_index, high, text = "Cover", color = color.yellow, size = size.tiny)
+        alert(exitShortAlertMsg)
+        isShort := false
+else if (isLong)
+    if (low <= longStop or high >= long_target)
+        exitLongLabel := label.new(bar_index, high, text = "Sell", color = color.yellow, size = size.tiny)
+        alert(exitLongAlertMsg)
+        isLong := false

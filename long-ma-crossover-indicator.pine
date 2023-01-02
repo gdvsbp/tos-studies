@@ -1,6 +1,14 @@
 //@version=5
 indicator("Long MA Crossover Indicator", "", overlay = true)
 
+// constants
+var TRADERS_POST = "TradersPost"
+var SUSAN = "Susan"
+var DISCORD = "Discord"
+
+// user configurations
+webhook_destination = input.string("Susan", title = "Webhook Destination", options=[TRADERS_POST, SUSAN, DISCORD])
+
 _high = high
 _low = low
 _time = time
@@ -82,6 +90,11 @@ short_target = close - lastAtr * 2
 var isLong = false
 var isShort = false
 
+// Generate Discord Msg JSON {
+generateDiscordMsg(msg) =>
+	'{ "username": "Susan", "content": "' + msg + '" }'
+// }
+
 // Configure Labels {
 var label longBuyLabel = na
 var label shortBuyLabel = na
@@ -89,30 +102,47 @@ var label exitLongLabel = na
 var label coverShortLabel = na
 // }
 
+// Configure Susan Alert Messages {
+ohlc = '{ "open": ' + str.tostring(open) + ', "high": ' + str.tostring(high) + ', "low": ' + str.tostring(low) + ', "high": ' + str.tostring(close) + '}'
+buyLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "LONG", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
+exitLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "EXIT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
+shortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "SHORT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
+exitShortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "EXIT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
+// } 
+
 // Configure TradersPost Alert Messages {
-buyLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "buy", "quantity": 1 }'
-exitLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
-shortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "sell", "quantity": 1 }'
-exitShortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
+if (webhook_destination == TRADERS_POST)
+    buyLongAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "buy", "quantity": 1 }'
+    exitLongAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
+    shortAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "sell", "quantity": 1 }'
+    exitShortAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
+// }
+
+// Configure Discord Alert Messages {
+if (webhook_destination == DISCORD)
+    buyLongAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: BUY ' + syminfo.ticker + ' @ ' + str.tostring(close))
+    exitLongAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: EXIT ' + syminfo.ticker + ' @ ' + str.tostring(close))
+    shortAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: SHORT ' + syminfo.ticker + ' @ ' + str.tostring(close))
+    exitShortAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: EXIT ' + syminfo.ticker + ' @ ' + str.tostring(close))
 // }
 
 // only make new entries if we have no positions (duh)
 if (isLong == false and isShort == false)
     if (lastMoveTooBig != true and crossUnder)
         isShort := true
-        shortBuyLabel := label.new(bar_index, high, text = "Short", color = color.red, textcolor = color.white, size = size.tiny)
-        alert(shortAlertMsg)
+        shortBuyLabel := label.new(bar_index, high, text = "Short " + str.tostring(close), color = color.red, textcolor = color.white, size = size.small)
+        alert(shortAlertMsg, alert.freq_once_per_bar)
     else if (lastMoveTooBig != true and crossOver)
         isLong := true
-        longBuyLabel := label.new(bar_index, high, text = "Buy", color = color.lime, size = size.tiny)
-        alert(buyLongAlertMsg)
+        longBuyLabel := label.new(bar_index, high, text = "Buy " + str.tostring(close), color = color.lime, size = size.small)
+        alert(buyLongAlertMsg, alert.freq_once_per_bar)
 else if (isShort)
     if (shortStop >= high or low <= short_target)
-        coverShortLabel := label.new(bar_index, high, text = "Cover", color = color.yellow, size = size.tiny)
-        alert(exitShortAlertMsg)
+        coverShortLabel := label.new(bar_index, high, text = "Cover " + str.tostring(close), color = color.yellow, size = size.small)
+        alert(exitShortAlertMsg, alert.freq_once_per_bar)
         isShort := false
 else if (isLong)
     if (low <= longStop or high >= long_target)
-        exitLongLabel := label.new(bar_index, high, text = "Sell", color = color.yellow, size = size.tiny)
-        alert(exitLongAlertMsg)
+        exitLongLabel := label.new(bar_index, high, text = "Sell " + str.tostring(close), color = color.yellow, size = size.small)
+        alert(exitLongAlertMsg, alert.freq_once_per_bar)
         isLong := false

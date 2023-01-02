@@ -10,6 +10,8 @@ QUANTITY = 1
 
 if (syminfo.type == 'futures')
     QUANTITY := math.floor(currentBalance / currentFuturesMarginPrice / 2)
+else
+    QUANTITY := math.floor(strategy.equity / close)
 
 _high = high
 _low = low
@@ -85,14 +87,19 @@ crossOver = ta.crossover(close, maBigFast)
 shortStop = math.max(high[2], high[1], high[3], high[4])
 longStop = math.min(low[2], low[1], low[3], low[4])
 
+var label longBuyLabel = na
+var label shortBuyLabel = na
+var label exitLongLabel = na
+var label coverShortLabel = na
+
 // only make new entries if we have no positions (duh)
 if (strategy.position_size == 0)
     if (lastMoveTooBig != true and crossUnder)
-        strategy.entry('short', strategy.short, QUANTITY, stop = maBigFastTop)
+        strategy.entry('Short', strategy.short, QUANTITY, stop = maBigFastTop, alert_message = "Enter Short")
     else if (lastMoveTooBig != true and crossOver)
-        strategy.entry('long', strategy.long, QUANTITY, stop = maBigFastBtm)
+        strategy.entry('Long', strategy.long, QUANTITY, stop = maBigFastBtm, alert_message = "Enter Long")
 else if (strategy.position_size < 0)
-    strategy.exit('short 1', from_entry = 'short', qty_percent = 100, limit = close - lastAtr * 2, stop = shortStop)
+    strategy.exit('Cover', from_entry = 'Short', qty_percent = 100, limit = close - lastAtr * 2, stop = shortStop, alert_message = "Exit Short")
 else if (strategy.position_size > 0)
-    strategy.exit('long 1', from_entry = 'long', qty_percent = 100, limit = close + lastAtr * 2, stop = longStop)
+    strategy.exit('Sell', from_entry = 'Long', qty_percent = 100, limit = close + lastAtr * 2, stop = longStop, alert_message = "Exit Long")
 

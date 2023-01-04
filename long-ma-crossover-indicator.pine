@@ -50,14 +50,14 @@ maBigFastTop = maBigFast + atr
 maBigFastBtm = maBigFast - atr
 plotBigFastTop = plot(maBigFastTop, color = na)
 plotBigFastBtm = plot(maBigFastBtm, color = na)
-fill(plotBigFastTop, plotBigFastBtm, color=color.new(colFastMa, 90), title='MA Cloud1')
+// fill(plotBigFastTop, plotBigFastBtm, color=color.new(colFastMa, 90), title='MA Cloud1')
 
-plot(maBigSlow, title = 'Big Slow MA', color = color.new(colSlowMa, 33), linewidth = 1, style = plot.style_line)
+// plot(maBigSlow, title = 'Big Slow MA', color = color.new(colSlowMa, 33), linewidth = 1, style = plot.style_line)
 maBigSlowTop = maBigSlow + atr
 maBigSlowBtm = maBigSlow - atr
 plotBigSlowTop = plot(maBigSlowTop, color = na)
 plotBigSlowBtm = plot(maBigSlowBtm, color = na)
-fill(plotBigSlowTop, plotBigSlowBtm, color=color.new(colSlowMa, 90), title='MA Cloud2')
+// fill(plotBigSlowTop, plotBigSlowBtm, color=color.new(colSlowMa, 90), title='MA Cloud2')
 
 trendingUp = maFast > maBigSlow and ta.rising(maBigFast, 5)
 trendingDn = maFast < maBigSlow and ta.falling(maBigFast, 5)
@@ -71,7 +71,7 @@ else if (maFast < maBigFastBtm and maFast < maBigSlowBtm)
     maFastColor := colRed
 else
     maFastColor := colYlw
-plot(maFast, title = 'Fast MA', color = maFastColor, linewidth = 2, style = plot.style_line)
+// plot(maFast, title = 'Fast MA', color = maFastColor, linewidth = 2, style = plot.style_line)
 
 lastMoveTooBig = (high[1] - low[1]) > lastAtr * 2
 
@@ -108,7 +108,7 @@ buyLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "LONG", "time
 exitLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "EXIT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
 shortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "SHORT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
 exitShortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "EXIT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
-// } 
+// }
 
 // Configure TradersPost Alert Messages {
 if (webhook_destination == TRADERS_POST)
@@ -120,29 +120,31 @@ if (webhook_destination == TRADERS_POST)
 
 // Configure Discord Alert Messages {
 if (webhook_destination == DISCORD)
-    buyLongAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: BUY ' + syminfo.ticker + ' @ ' + str.tostring(close))
+    buyLongAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: BUY ' + syminfo.ticker + ' @ ' + str.tostring(close) + ' with a initial stop loss of ' + str.tostring(math.round_to_mintick(longStop)) + ' and a initial target of ' + str.tostring(math.round_to_mintick(long_target)))
     exitLongAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: EXIT ' + syminfo.ticker + ' @ ' + str.tostring(close))
-    shortAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: SHORT ' + syminfo.ticker + ' @ ' + str.tostring(close))
+    shortAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: SHORT ' + syminfo.ticker + ' @ ' + str.tostring(close) + ' with a initial stop loss of ' + str.tostring(math.round_to_mintick(shortStop)) + ' and a initial target of ' + str.tostring(math.round_to_mintick(short_target)))
     exitShortAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: EXIT ' + syminfo.ticker + ' @ ' + str.tostring(close))
 // }
 
-// only make new entries if we have no positions (duh)
-if (isLong == false and isShort == false)
+// only make new entries if we have no positions (duh) and candle is closed closed
+if (barstate.isconfirmed and isLong == false and isShort == false)
     if (lastMoveTooBig != true and crossUnder)
         isShort := true
-        shortBuyLabel := label.new(bar_index, high, text = "Short " + str.tostring(close), color = color.red, textcolor = color.white, size = size.small)
+        labelText = "Short \n" + str.tostring(close) + "\n Stop: " + str.tostring(shortStop) + "\n Target: " + str.tostring(math.round_to_mintick(short_target))
+        shortBuyLabel := label.new(bar_index, high, text = labelText, color = color.red, textcolor = color.white, size = size.small)
         alert(shortAlertMsg, alert.freq_once_per_bar)
     else if (lastMoveTooBig != true and crossOver)
         isLong := true
-        longBuyLabel := label.new(bar_index, high, text = "Buy " + str.tostring(close), color = color.lime, size = size.small)
+        labelText = "Buy \n" + str.tostring(close) + "\n Stop: " + str.tostring(longStop) + "\n Target: " + str.tostring(math.round_to_mintick(long_target))
+        longBuyLabel := label.new(bar_index, high, text = labelText, color = color.lime, size = size.small)
         alert(buyLongAlertMsg, alert.freq_once_per_bar)
 else if (isShort)
     if (shortStop >= high or low <= short_target)
-        coverShortLabel := label.new(bar_index, high, text = "Cover " + str.tostring(close), color = color.yellow, size = size.small)
+        coverShortLabel := label.new(bar_index, high, text = "Cover \n" + str.tostring(close), color = color.yellow, size = size.small)
         alert(exitShortAlertMsg, alert.freq_once_per_bar)
         isShort := false
 else if (isLong)
     if (low <= longStop or high >= long_target)
-        exitLongLabel := label.new(bar_index, high, text = "Sell " + str.tostring(close), color = color.yellow, size = size.small)
+        exitLongLabel := label.new(bar_index, high, text = "Sell \n" + str.tostring(close), color = color.yellow, size = size.small)
         alert(exitLongAlertMsg, alert.freq_once_per_bar)
         isLong := false

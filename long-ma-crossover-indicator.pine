@@ -118,9 +118,9 @@ exitShortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "EXIT", "ti
 
 // Configure TradersPost Alert Messages {
 if (webhook_destination == TRADERS_POST)
-    buyLongAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "buy", "quantity": 1, "stopLoss": { "stopPrice": ' + str.tostring(longStop) + '} }'
+    buyLongAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "buy", "quantity": 1, "stopLoss": { "stopPrice": ' + str.tostring(longStop) + '}, "takeProfit": { "limitPrice": ' + str.tostring(longProfitTarget) + '} }'
     exitLongAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
-    shortAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "sell", "quantity": 1, "stopLoss": { "stopPrice": ' + str.tostring(shortStop) + '} }'
+    shortAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "sell", "quantity": 1, "stopLoss": { "stopPrice": ' + str.tostring(shortStop) + '}, "takeProfit": { "limitPrice": ' + str.tostring(shortProfitTarget) + '} }'
     exitShortAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
 // }
 
@@ -150,7 +150,7 @@ if (barstate.isconfirmed and isLong == false and isShort == false)
         longBuyLabel := label.new(bar_index, high, text = labelText, color = color.lime, size = size.small)
         alert(buyLongAlertMsg, alert.freq_once_per_bar)
 else if (isShort)
-    if (shortStop >= high or low <= shortProfitTarget)
+    if (high >= shortStop or low <= shortProfitTarget)
         coverShortLabel := label.new(bar_index, high, text = "Cover \n" + str.tostring(close), color = color.yellow, size = size.small)
         alert(exitShortAlertMsg, alert.freq_once_per_bar)
         isShort := false

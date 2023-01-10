@@ -7,7 +7,8 @@ var SUSAN = "Susan"
 var DISCORD = "Discord"
 
 // user configurations
-webhook_destination = input.string("Susan", title = "Webhook Destination", options=[TRADERS_POST, SUSAN, DISCORD])
+webhookDestination = input.string("Susan", title = "Webhook Destination", options=[TRADERS_POST, SUSAN, DISCORD])
+profitTargetMultiplier = input.float(title = "Profit Target Multiplier", minval = 0.5, defval = 3.5, step = 0.5)
 
 _high = high
 _low = low
@@ -92,8 +93,8 @@ var float longProfitTarget = na
 
 // only update the target when there is no position so we're not trailing up when there is one
 if (isLong == false and isShort == false)
-    shortProfitTarget := close - lastAtr * 3.5
-    longProfitTarget := close + lastAtr * 3.5
+    shortProfitTarget := close - lastAtr * profitTargetMultiplier
+    longProfitTarget := close + lastAtr * profitTargetMultiplier
 // }
 
 // Generate Discord Msg JSON {
@@ -110,14 +111,14 @@ var label coverShortLabel = na
 
 // Configure Susan Alert Messages {
 ohlc = '{ "open": ' + str.tostring(open) + ', "high": ' + str.tostring(high) + ', "low": ' + str.tostring(low) + ', "high": ' + str.tostring(close) + '}'
-buyLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "LONG", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
+buyLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "LONG", "stopLoss":  ' + str.tostring(math.round_to_mintick(longStop)) + ', "profitTarget":  ' + str.tostring(math.round_to_mintick(longProfitTarget)) + ', "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
 exitLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "EXIT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
-shortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "SHORT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
+shortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "SHORT", "stopLoss":  ' + str.tostring(math.round_to_mintick(shortStop)) + ', "profitTarget":  ' + str.tostring(math.round_to_mintick(shortProfitTarget)) + ', "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
 exitShortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "EXIT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
 // }
 
 // Configure TradersPost Alert Messages {
-if (webhook_destination == TRADERS_POST)
+if (webhookDestination == TRADERS_POST)
     buyLongAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "buy", "quantity": 1, "stopLoss": { "stopPrice": ' + str.tostring(longStop) + '}, "takeProfit": { "limitPrice": ' + str.tostring(longProfitTarget) + '} }'
     exitLongAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "exit", "quantity": 1 }'
     shortAlertMsg := '{ "ticker": "' + syminfo.ticker + '", "action": "sell", "quantity": 1, "stopLoss": { "stopPrice": ' + str.tostring(shortStop) + '}, "takeProfit": { "limitPrice": ' + str.tostring(shortProfitTarget) + '} }'
@@ -125,7 +126,7 @@ if (webhook_destination == TRADERS_POST)
 // }
 
 // Configure Discord Alert Messages {
-if (webhook_destination == DISCORD)
+if (webhookDestination == DISCORD)
     buyLongAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: BUY ' + syminfo.ticker + ' @ ' + str.tostring(close) + ' with a initial stop loss of ' + str.tostring(math.round_to_mintick(longStop)) + ' and a initial target of ' + str.tostring(math.round_to_mintick(longProfitTarget)))
     exitLongAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: EXIT ' + syminfo.ticker + ' @ ' + str.tostring(close))
     shortAlertMsg := generateDiscordMsg('**Long MA Strategy Alert**: SHORT ' + syminfo.ticker + ' @ ' + str.tostring(close) + ' with a initial stop loss of ' + str.tostring(math.round_to_mintick(shortStop)) + ' and a initial target of ' + str.tostring(math.round_to_mintick(shortProfitTarget)))

@@ -2,7 +2,7 @@
 // © gdvsbp
 
 //@version=5
-strategy("Long MA Crossover Strat", overlay=true, initial_capital = 5000)
+strategy("Long MA Crossover Strategy", overlay=true, initial_capital = 10000)
 
 currentBalance = strategy.initial_capital + strategy.netprofit
 currentFuturesMarginPrice = (close * syminfo.pointvalue) * .06
@@ -10,6 +10,8 @@ QUANTITY = 1
 
 if (syminfo.type == 'futures')
     QUANTITY := math.floor(currentBalance / currentFuturesMarginPrice / 2)
+else
+    QUANTITY := math.floor(strategy.equity / close)
 
 _high = high
 _low = low
@@ -78,6 +80,12 @@ plot(maFast, title = 'Fast MA', color = maFastColor, linewidth = 2, style = plot
 lastMoveTooBig = (high[1] - low[1]) > lastAtr * 2
 
 // TODO: check if crossover is > 50-60% candle body before going in
+// candleMidPoint = (open + close) / 2
+// candleUpperQuarter = (open + candleMidPoint) / 2
+// candleLowerQuarter = (close + candleMidPoint) / 2
+// plot(candleMidPoint, title = 'Mid Candle Price')
+// plot(candleUpperQuarter, title = 'Upper Quarter Candle Price')
+// plot(candleLowerQuarter, title = 'Lower Quarter Candle Price')
 crossUnder = ta.crossunder(close, maBigFast)
 crossOver = ta.crossover(close, maBigFast)
 
@@ -85,14 +93,51 @@ crossOver = ta.crossover(close, maBigFast)
 shortStop = math.max(high[2], high[1], high[3], high[4])
 longStop = math.min(low[2], low[1], low[3], low[4])
 
+var label longBuyLabel = na
+var label shortBuyLabel = na
+var label exitLongLabel = na
+var label coverShortLabel = na
+
+var float shortStopLoss = shortStop
+var float longStopLoss = longStop
+
+var float shortProfitTarget = na
+var float longProfitTarget = na
+
+var float shortTakeProfitStep1 = na
+var float shortTakeProfitStep2 = na
+var float shortTakeProfitStep3 = na
+var float shortTakeProfitStep4 = na
+
+var float longTakeProfitStep1 = na
+var float longTakeProfitStep2 = na
+var float longTakeProfitStep3 = na
+var float longTakeProfitStep4 = na
+
+// Only update the profit targets when there is currently no active position so we aren't constantly
+// moving the target up up and up
+if (strategy.position_size == 0)
+    shortProfitTarget := close - lastAtr * 3.5
+    shortTakeProfitStep1 := close - lastAtr * 1
+    shortTakeProfitStep2 := close - lastAtr * 2
+
+    longProfitTarget := close + lastAtr * 3.5
+    longTakeProfitStep1 := close + lastAtr * 1
+    longTakeProfitStep2 := close + lastAtr * 2
+
+plot(shortStop, 'Short Stop', style = plot.style_line, color = color.maroon)
+plot(shortProfitTarget, 'Short Target', style = plot.style_line, color = color.maroon)
+plot(longStop, 'Long Stop', style = plot.style_line, color = color.olive)
+plot(longProfitTarget, 'Long Target', style = plot.style_line, color = color.olive)
+
 // only make new entries if we have no positions (duh)
 if (strategy.position_size == 0)
     if (lastMoveTooBig != true and crossUnder)
-        strategy.entry('short', strategy.short, QUANTITY, stop = maBigFastTop)
+        strategy.entry('Short', strategy.short, QUANTITY, stop = maBigFastTop, alert_message = "Enter Short")
     else if (lastMoveTooBig != true and crossOver)
-        strategy.entry('long', strategy.long, QUANTITY, stop = maBigFastBtm)
+        strategy.entry('Long', strategy.long, QUANTITY, stop = maBigFastBtm, alert_message = "Enter Long")
 else if (strategy.position_size < 0)
-    strategy.exit('short 1', from_entry = 'short', qty_percent = 100, limit = close - lastAtr * 2, stop = shortStop)
+    strategy.exit('Cover', from_entry = 'Short', qty_percent = 100, limit = shortProfitTarget, stop = shortStop)
 else if (strategy.position_size > 0)
-    strategy.exit('long 1', from_entry = 'long', qty_percent = 100, limit = close + lastAtr * 2, stop = longStop)
+    strategy.exit('Sell', from_entry = 'Long', qty_percent = 100, limit = longProfitTarget, stop = longStop)
 

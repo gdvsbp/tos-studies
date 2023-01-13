@@ -16,6 +16,7 @@ input rsiAverageType = AverageType.SIMPLE;
 input rsiCrossDown = 60;
 input rsiCrossUp = 40;
 
+// @ts-ignore
 def NetChgAvg = MovingAverage(averageType, price - price[1], length);
 def TotChgAvg = MovingAverage(averageType, AbsValue(price - price[1]), length);
 def ChgRatio = if TotChgAvg != 0 then NetChgAvg / TotChgAvg else 0;

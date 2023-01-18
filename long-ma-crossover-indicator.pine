@@ -24,7 +24,9 @@ colYlw = #FFFF66
 colSlowMa = colRed
 colFastMa = colGrn
 
-// Super slow MA
+// MAs
+ma_25 = ta.sma(close, 25)
+ma_50 = ta.sma(close, 50)
 maBigFast = ta.sma(close, 100)
 maBigSlow = ta.sma(close, 200)
 
@@ -79,6 +81,10 @@ lastMoveTooBig = (high[1] - low[1]) > lastAtr * 2
 // TODO: check if crossover is > 50-60% candle body before going in
 crossUnder = ta.crossunder(close, maBigFast)
 crossOver = ta.crossover(close, maBigFast)
+subCrossOver = ta.crossover(close, ma_50)
+subCrossUnder = ta.crossunder(close, ma_50)
+superSubCrossOver = ta.crossover(close, ma_25)
+superSubCrossUnder = ta.crossunder(close, ma_25)
 
 // NOTE: taking the most distant high/low from the last 4 bars to act as a stop... raises success rate to 60%+
 shortStop = math.max(high[2], high[1], high[3], high[4])
@@ -110,7 +116,7 @@ var label coverShortLabel = na
 // }
 
 // Configure Susan Alert Messages {
-ohlc = '{ "open": ' + str.tostring(open) + ', "high": ' + str.tostring(high) + ', "low": ' + str.tostring(low) + ', "high": ' + str.tostring(close) + '}'
+ohlc = '{ "open": ' + str.tostring(open) + ', "high": ' + str.tostring(high) + ', "low": ' + str.tostring(low) + ', "close": ' + str.tostring(close) + '}'
 buyLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "LONG", "stopLoss":  ' + str.tostring(math.round_to_mintick(longStop)) + ', "profitTarget":  ' + str.tostring(math.round_to_mintick(longProfitTarget)) + ', "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
 exitLongAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "EXIT", "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
 shortAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "SHORT", "stopLoss":  ' + str.tostring(math.round_to_mintick(shortStop)) + ', "profitTarget":  ' + str.tostring(math.round_to_mintick(shortProfitTarget)) + ', "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
@@ -138,6 +144,9 @@ plot(shortProfitTarget, 'Short Target', style = plot.style_line, color = color.m
 plot(longStop, 'Long Stop', style = plot.style_line, color = color.olive)
 plot(longProfitTarget, 'Long Target', style = plot.style_line, color = color.olive)
 
+shortCondition = (subCrossUnder and close < maBigFast) or (superSubCrossUnder and close < ma_50 and close < maBigFast)
+longCondition = (subCrossOver and close > maBigFast) or (superSubCrossOver and close > ma_50 and close > maBigFast)
+
 // only make new entries if we have no positions (duh) and candle is closed closed
 if (barstate.isconfirmed and isLong == false and isShort == false)
     if (lastMoveTooBig != true and crossUnder)
@@ -145,7 +154,7 @@ if (barstate.isconfirmed and isLong == false and isShort == false)
         labelText = "Short \n" + str.tostring(close) + "\n Stop: " + str.tostring(shortStop) + "\n Target: " + str.tostring(math.round_to_mintick(shortProfitTarget))
         shortBuyLabel := label.new(bar_index, high, text = labelText, color = color.red, textcolor = color.white, size = size.small)
         alert(shortAlertMsg, alert.freq_once_per_bar)
-    else if (lastMoveTooBig != true and crossOver)
+    else if (lastMoveTooBig != true and crossOver or longCondition)
         isLong := true
         labelText = "Buy \n" + str.tostring(close) + "\n Stop: " + str.tostring(longStop) + "\n Target: " + str.tostring(math.round_to_mintick(longProfitTarget))
         longBuyLabel := label.new(bar_index, high, text = labelText, color = color.lime, size = size.small)

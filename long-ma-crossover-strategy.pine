@@ -40,6 +40,8 @@ maVolume = ta.sma(volume, 20)
 atr = ta.atr(14)
 lastAtr = atr
 
+plot(atr, title = 'ATR')
+
 // MA
 maFast = ta.ema(close, 5)
 maSlow = ta.sma(close, 15)
@@ -118,6 +120,20 @@ var float longTakeProfitStep2 = na
 var float longTakeProfitStep3 = na
 var float longTakeProfitStep4 = na
 
+// Dynamic Profit Target with Bollinger Bands {
+bbPeriod = 14
+bbStdDeviation = 3
+bbThreshold = 15
+
+[upper, middle, lower] = ta.bb(close, bbPeriod, bbStdDeviation)
+
+// override profit target with dynamic bb one
+PROFIT_TARGET_MULTIPLIER := math.round(((upper - lower) / atr * 10) / 10)
+
+// check the upper and lower diff, if it's less than the thresholder than it's conslidating
+isChartConsolidating = upper - lower < bbThreshold
+// }
+
 // Only update the profit targets when there is currently no active position so we aren't constantly
 // moving the target up up and up
 if (strategy.position_size == 0)
@@ -134,14 +150,15 @@ plot(shortProfitTarget, 'Short Target', style = plot.style_line, color = color.m
 plot(longStop, 'Long Stop', style = plot.style_line, color = color.olive)
 plot(longProfitTarget, 'Long Target', style = plot.style_line, color = color.olive)
 
-shortCondition = (subCrossUnder and close < maBigFast) or (superSubCrossUnder and close < ma_50 and close < maBigFast)
+// shortCondition = (subCrossUnder and close < maBigFast) or (superSubCrossUnder and close < ma_50 and close < maBigFast)
+shortCondition = ta.crossunder(ma_25, ma_50)
 longCondition = (subCrossOver and close > maBigFast) or (superSubCrossOver and close > ma_50 and close > maBigFast)
 
 // only make new entries if we have no positions (duh)
 if (strategy.position_size == 0)
     if (lastMoveTooBig != true and crossUnder)
         strategy.entry('Short', strategy.short, QUANTITY)
-    else if (lastMoveTooBig != true and crossOver or longCondition)
+    else if (lastMoveTooBig != true and crossOver or (trendingUp and longCondition))
         strategy.entry('Long', strategy.long, QUANTITY)
 else if (strategy.position_size < 0)
     strategy.exit('Cover', from_entry = 'Short', qty_percent = 100, limit = shortProfitTarget, stop = shortStop)

@@ -9,6 +9,7 @@ var DISCORD = "Discord"
 // user configurations
 webhookDestination = input.string("Susan", title = "Webhook Destination", options=[TRADERS_POST, SUSAN, DISCORD])
 profitTargetMultiplier = input.float(title = "Profit Target Multiplier", minval = 0.5, defval = 3.5, step = 0.5)
+useDynamicProfitTarget = input.bool(title = 'Dynamic Profit Target', defval = false)
 
 _high = high
 _low = low
@@ -97,6 +98,21 @@ var isShort = false
 var float shortProfitTarget = na
 var float longProfitTarget = na
 
+// Dynamic Profit Target with Bollinger Bands {
+bbPeriod = 14
+bbStdDeviation = 3
+bbThreshold = 15
+
+[upper, middle, lower] = ta.bb(close, bbPeriod, bbStdDeviation)
+
+// override profit target with dynamic bb one
+if (useDynamicProfitTarget)
+    profitTargetMultiplier := math.round(((upper - lower) / atr * 10) / 10)
+
+// check the upper and lower diff, if it's less than the thresholder than it's conslidating
+isChartConsolidating = upper - lower < bbThreshold
+// }
+
 // only update the target when there is no position so we're not trailing up when there is one
 if (isLong == false and isShort == false)
     shortProfitTarget := close - lastAtr * profitTargetMultiplier
@@ -154,7 +170,7 @@ if (barstate.isconfirmed and isLong == false and isShort == false)
         labelText = "Short \n" + str.tostring(close) + "\n Stop: " + str.tostring(shortStop) + "\n Target: " + str.tostring(math.round_to_mintick(shortProfitTarget))
         shortBuyLabel := label.new(bar_index, high, text = labelText, color = color.red, textcolor = color.white, size = size.small)
         alert(shortAlertMsg, alert.freq_once_per_bar)
-    else if (lastMoveTooBig != true and crossOver or longCondition)
+    else if (lastMoveTooBig != true and crossOver or (trendingUp and longCondition))
         isLong := true
         labelText = "Buy \n" + str.tostring(close) + "\n Stop: " + str.tostring(longStop) + "\n Target: " + str.tostring(math.round_to_mintick(longProfitTarget))
         longBuyLabel := label.new(bar_index, high, text = labelText, color = color.lime, size = size.small)

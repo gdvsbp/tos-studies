@@ -165,12 +165,12 @@ longCondition = (subCrossOver and close > maBigFast) or (superSubCrossOver and c
 
 // only make new entries if we have no positions (duh) and candle is closed closed
 if (barstate.isconfirmed and isLong == false and isShort == false)
-    if (lastMoveTooBig != true and crossUnder)
+    if (isChartConsolidating == false and crossUnder and isChartConsolidating == false)
         isShort := true
         labelText = "Short \n" + str.tostring(close) + "\n Stop: " + str.tostring(shortStop) + "\n Target: " + str.tostring(math.round_to_mintick(shortProfitTarget))
         shortBuyLabel := label.new(bar_index, high, text = labelText, color = color.red, textcolor = color.white, size = size.small)
         alert(shortAlertMsg, alert.freq_once_per_bar)
-    else if (lastMoveTooBig != true and crossOver or (trendingUp and longCondition))
+    else if (isChartConsolidating == false and crossOver or (trendingUp and longCondition))
         isLong := true
         labelText = "Buy \n" + str.tostring(close) + "\n Stop: " + str.tostring(longStop) + "\n Target: " + str.tostring(math.round_to_mintick(longProfitTarget))
         longBuyLabel := label.new(bar_index, high, text = labelText, color = color.lime, size = size.small)

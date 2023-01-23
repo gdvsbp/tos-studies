@@ -156,12 +156,11 @@ longCondition = (subCrossOver and close > maBigFast) or (superSubCrossOver and c
 
 // only make new entries if we have no positions (duh)
 if (strategy.position_size == 0)
-    if (lastMoveTooBig != true and crossUnder)
+    if (isChartConsolidating == false and crossUnder)
         strategy.entry('Short', strategy.short, QUANTITY)
-    else if (lastMoveTooBig != true and crossOver or (trendingUp and longCondition))
+    else if (isChartConsolidating == false and crossOver or (trendingUp and longCondition))
         strategy.entry('Long', strategy.long, QUANTITY)
 else if (strategy.position_size < 0)
     strategy.exit('Cover', from_entry = 'Short', qty_percent = 100, limit = shortProfitTarget, stop = shortStop)
 else if (strategy.position_size > 0)
     strategy.exit('Sell', from_entry = 'Long', qty_percent = 100, limit = longProfitTarget, stop = longStop)
-

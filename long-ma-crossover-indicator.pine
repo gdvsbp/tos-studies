@@ -129,6 +129,7 @@ var label longBuyLabel = na
 var label shortBuyLabel = na
 var label exitLongLabel = na
 var label coverShortLabel = na
+var label stopLossLabel = na
 // }
 
 // Configure Susan Alert Messages {
@@ -176,11 +177,25 @@ if (barstate.isconfirmed and isLong == false and isShort == false)
         longBuyLabel := label.new(bar_index, high, text = labelText, color = color.lime, size = size.small)
         alert(buyLongAlertMsg, alert.freq_once_per_bar)
 else if (isShort)
+    // check if stopped has been changed and the candle has been closed, if so alert to move stop up
+    if (barstate.isconfirmed and shortStop[1] != shortStop)
+        stopLossUpdateAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "STOP_LOSS_UPDATE", "stopLoss":  ' + str.tostring(math.round_to_mintick(shortStop)) + ', "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
+        alert(stopLossUpdateAlertMsg, alert.freq_once_per_bar)
+        stopLossLabel := label.new(bar_index, low, text = "Stop " + str.tostring(shortStop), color = color.maroon, textcolor = color.white)
+
+    // check if the current price has hit our stop or limit sell and trigger an exit alert
     if (high >= shortStop or low <= shortProfitTarget)
         coverShortLabel := label.new(bar_index, high, text = "Cover \n" + str.tostring(close), color = color.yellow, size = size.small)
         alert(exitShortAlertMsg, alert.freq_once_per_bar)
         isShort := false
 else if (isLong)
+    // check if stopped has been changed and the candle has been closed, if so alert to move stop up
+    if (barstate.isconfirmed and longStop[1] != longStop)
+        stopLossUpdateAlertMsg = '{ "ticker": "' + syminfo.ticker + '", "action": "STOP_LOSS_UPDATE", "stopLoss":  ' + str.tostring(math.round_to_mintick(longStop)) + ', "timestamp": "' + str.tostring(timenow) + '", "candle": ' + ohlc + ' }'
+        alert(stopLossUpdateAlertMsg, alert.freq_once_per_bar)
+        stopLossLabel := label.new(bar_index, low, text = "Stop " + str.tostring(longStop), color = color.maroon, textcolor = color.white)
+
+    // check if the current price has hit our stop or limit sell and trigger an exit alert
     if (low <= longStop or high >= longProfitTarget)
         exitLongLabel := label.new(bar_index, high, text = "Sell \n" + str.tostring(close), color = color.yellow, size = size.small)
         alert(exitLongAlertMsg, alert.freq_once_per_bar)

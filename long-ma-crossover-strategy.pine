@@ -145,6 +145,19 @@ if (strategy.position_size == 0)
     longTakeProfitStep1 := close + lastAtr * 1.5
     longTakeProfitStep2 := close + lastAtr * 2
 
+    longProfitDiff = math.abs(longProfitTarget - close)
+    longStopDiff = math.abs(longStop - close)
+
+    shortProfitDiff = math.abs(shortProfitTarget - close)
+    shortStopDiff = math.abs(shortStop - close)
+
+    if (longStopDiff > longProfitDiff)
+        longStop := close - longProfitDiff
+        longProfitTarget := close + longStopDiff
+    if (shortStopDiff > shortProfitDiff)
+        shortStop := close + shortProfitDiff
+        shortProfitTarget := close - shortStopDiff
+
 plot(shortStop, 'Short Stop', style = plot.style_line, color = color.maroon)
 plot(shortProfitTarget, 'Short Target', style = plot.style_line, color = color.maroon)
 plot(longStop, 'Long Stop', style = plot.style_line, color = color.olive)
@@ -156,10 +169,11 @@ longCondition = (subCrossOver and close > maBigFast) or (superSubCrossOver and c
 
 // only make new entries if we have no positions (duh)
 if (strategy.position_size == 0)
-    if (isChartConsolidating == false and crossUnder)
-        strategy.entry('Short', strategy.short, QUANTITY)
-    else if (isChartConsolidating == false and crossOver or (trendingUp and longCondition))
-        strategy.entry('Long', strategy.long, QUANTITY)
+    if (isChartConsolidating == false)
+        if (crossUnder)
+            strategy.entry('Short', strategy.short, QUANTITY)
+        else if (crossOver or (trendingUp and longCondition))
+            strategy.entry('Long', strategy.long, QUANTITY)
 else if (strategy.position_size < 0)
     strategy.exit('Cover', from_entry = 'Short', qty_percent = 100, limit = shortProfitTarget, stop = shortStop)
 else if (strategy.position_size > 0)

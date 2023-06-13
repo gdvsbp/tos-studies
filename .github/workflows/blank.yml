@@ -2,18 +2,20 @@ name: Pull Request Validate
 
 on:
   pull_request:
+    types: [opened, reopened]
     branches:
       - develop
       - master
 
+env:
+REVIEWERS: bdoooh
+
 jobs:
-  pr_add:
-    name: Auto Add PR Reviewers
+  onOpenedPullRequest:
     runs-on: ubuntu-latest
     steps:
-      - name: Add Pull Request Reviewer
-        uses: AveryCameronUofR/add-reviewer-gh-action@1.0.3
-        with: 
-          node-version: '16'
-          reviewers: "bdoooh"
+      - name: Add Pull Request Reviewers
+        uses: sakhnovict/add-reviewers-action@1.0.0
+        with:
+          reviewers: ${{ env.REVIEWERS }}
           token: ${{ secrets.ACTIONS_KEY }}

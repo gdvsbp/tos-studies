@@ -3,7 +3,7 @@ ema5.SetDefaultColor(Color.WHITE);
 plot ema8 = ExpAverage(close, 8);
 ema8.SetDefaultColor(Color.CYAN);
 plot ema20 = ExpAverage(close, 20);
-ema20.SetDefaultColor(Color.MAGENTA);
+ema20.SetDefaultColor(Color.MAGENTA);asdfasdfasdfasdf
 plot ema50 = ExpAverage(close, 50);
 ema50.SetDefaultColor(Color.PLUM);
 

@@ -12,7 +12,7 @@ def bullishContinuation = (ema20[1] < ema20[0] and ema5[1] > ema8[1] and ema5[0]
 # Alert(bullishContinuation, "Long $" + close[0], Alert.Bar, Sound.Ring);
 
 plot bullBuy = if (bullishContinuation) then yes else no;
-bullBuy.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+bullBuy.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);asdfasdf
 bullBuy.SetDefaultColor(Color.UPTICK);
 
 # bearish continuation buy

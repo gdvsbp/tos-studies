@@ -14,5 +14,5 @@ jobs:
       - name: Add Pull Request Reviewer
         uses: AveryCameronUofR/add-reviewer-gh-action@1.0.3
         with: 
-          reviewers: "gdvsbp"
+          reviewers: "bdoooh"
           token: ${{ secrets.ACTIONS_KEY }}

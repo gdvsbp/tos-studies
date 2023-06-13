@@ -4,7 +4,7 @@
 # https://usethinkscript.com/d/185-moving-average-crossover-rsi-indicator-for-thinkorswim
 
 declare lower;
-
+asdf
 input length = 14;
 input over_Bought = 70;
 input over_Sold = 30;
@@ -15,7 +15,7 @@ input rsiMALength = 5; #hint rsiMALength: RSI Moving Average Length
 input rsiAverageType = AverageType.SIMPLE;
 input rsiCrossDown = 60;
 input rsiCrossUp = 40;
-
+asdfasdfasdfasdf
 def NetChgAvg = MovingAverage(averageType, price - price[1], length);
 def TotChgAvg = MovingAverage(averageType, AbsValue(price - price[1]), length);
 def ChgRatio = if TotChgAvg != 0 then NetChgAvg / TotChgAvg else 0;
